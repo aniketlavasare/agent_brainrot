@@ -12,15 +12,28 @@ function requestResize(width, height) {
   } catch {}
 }
 
+function updateFrameSize() {
+  // If menu is open, use the menu size. Otherwise, expand to fit speech bubble if visible.
+  const speechVisible = !speech?.hidden;
+  if (menuOpen) {
+    requestResize(220, 260);
+  } else if (speechVisible) {
+    // Enough room for bubble above the avatar
+    requestResize(260, 200);
+  } else {
+    requestResize(80, 80);
+  }
+}
+
 function openMenu() {
   menuOpen = true;
   menu.classList.add("open");
-  requestResize(220, 260);
+  updateFrameSize();
 }
 function closeMenu() {
   menuOpen = false;
   menu.classList.remove("open");
-  requestResize(80, 80);
+  updateFrameSize();
 }
 
 // open modules
@@ -71,11 +84,13 @@ function showSpeech(text) {
   if (!speech || !speechText) return;
   speech.hidden = false;
   speechText.textContent = text;
+  updateFrameSize();
 }
 function hideSpeech() {
   if (!speech || !speechText) return;
   speech.hidden = true;
   speechText.textContent = "";
+  updateFrameSize();
 }
 
 function requestPageText() {
