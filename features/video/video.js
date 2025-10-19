@@ -6,6 +6,11 @@ const FEED_COUNT = 10;
 let currentIndex = 0;
 let feedItems = [];
 let scrollTimer;
+const FALLBACK_IDS = [
+  'dQw4w9WgXcQ',
+  'kJQP7kiw5Fk',
+  '3JZ_D3ELwOQ'
+];
 
 async function getPrefs() {
   return new Promise((resolve) => {
@@ -21,7 +26,9 @@ async function getPrefs() {
 }
 
 function embedUrl(videoId, autoplay = true) {
-  return `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay?1:0}&mute=1&playsinline=1&modestbranding=1&rel=0&controls=1`;
+  const origin = encodeURIComponent(window.location.origin || '');
+  const ts = Date.now();
+  return `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay?1:0}&mute=1&playsinline=1&modestbranding=1&rel=0&controls=1&origin=${origin}&ts=${ts}`;
 }
 
 function clearReel() {
@@ -33,9 +40,17 @@ function slideEl(item) {
   const el = document.createElement("div");
   el.className = "slide";
   el.dataset.id = item.id;
+  // Use a thumbnail as a placeholder to avoid visible blanks while scrolling
+  if (item && item.thumb) {
+    el.style.backgroundImage = `url(${item.thumb})`;
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = 'center';
+    el.style.backgroundRepeat = 'no-repeat';
+  }
   const iframe = document.createElement("iframe");
   iframe.allow = "autoplay; encrypted-media; picture-in-picture";
   iframe.setAttribute("allowfullscreen", "");
+  try { iframe.loading = 'lazy'; } catch {}
   iframe.src = "about:blank";
   el.appendChild(iframe);
   return el;
@@ -55,14 +70,27 @@ function activate(index) {
   slides.forEach((s, i) => {
     const iframe = s.querySelector("iframe");
     const id = s.dataset.id;
-    if (!iframe) return;
-    if (i === index) {
+    if (!iframe || !id) return;
+    const dist = Math.abs(i - index);
+    if (dist === 0) {
       const url = embedUrl(id, true);
+      if (iframe.src !== url) iframe.src = url;
+    } else if (dist === 1) {
+      const url = embedUrl(id, false);
       if (iframe.src !== url) iframe.src = url;
     } else {
       if (iframe.src !== "about:blank") iframe.src = "about:blank";
     }
   });
+}
+
+// If autoplay is blocked by Permissions Policy, retry activation on first user gesture
+let kickstarted = false;
+function kickstartAutoplayOnce() {
+  if (kickstarted) return;
+  kickstarted = true;
+  // Re-activate current index to refresh the active iframe with a fresh autoplay URL
+  try { activate(currentIndex); } catch {}
 }
 
 function onScrollEnd() {
@@ -82,9 +110,11 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowDown" || e.key === "PageDown") {
     e.preventDefault();
     reel.scrollTo({ top: (currentIndex + 1) * reel.clientHeight, behavior: "smooth" });
+    kickstartAutoplayOnce();
   } else if (e.key === "ArrowUp" || e.key === "PageUp") {
     e.preventDefault();
     reel.scrollTo({ top: (currentIndex - 1) * reel.clientHeight, behavior: "smooth" });
+    kickstartAutoplayOnce();
   }
 });
 
@@ -96,6 +126,9 @@ function move(delta) {
 
 navUp?.addEventListener('click', () => move(-1));
 navDown?.addEventListener('click', () => move(1));
+
+// Any click/tap inside the player tries to kickstart autoplay once
+document.getElementById('playerWrap')?.addEventListener('pointerdown', kickstartAutoplayOnce, { once: true });
 
 async function loadFeedFromPrefs(overrideTopic) {
   if (!window.ABYoutube) return;
@@ -125,10 +158,26 @@ async function loadFeedFromPrefs(overrideTopic) {
     } else {
       feedItems = await window.ABYoutube.searchYouTube(`${topic} #shorts`, { shortsOnly: shortsOnly !== false, maxResults: FEED_COUNT, order: 'relevance', safeSearch: 'moderate' });
     }
+    if (!Array.isArray(feedItems) || feedItems.length === 0) {
+      feedItems = FALLBACK_IDS.map(id => ({ 
+        id, 
+        url: `https://www.youtube.com/watch?v=${id}`, 
+        thumb: `https://i.ytimg.com/vi/${id}/mqdefault.jpg` 
+      }));
+    }
     buildReel(feedItems);
     activate(0);
   } catch (e) {
     console.warn('Feed load failed', e);
+    try {
+      feedItems = FALLBACK_IDS.map(id => ({ 
+        id, 
+        url: `https://www.youtube.com/watch?v=${id}`, 
+        thumb: `https://i.ytimg.com/vi/${id}/mqdefault.jpg` 
+      }));
+      buildReel(feedItems);
+      activate(0);
+    } catch {}
   }
 }
 

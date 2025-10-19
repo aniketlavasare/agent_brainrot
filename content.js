@@ -6,6 +6,7 @@
   const OVERLAY_CLASS = "__ab_overlay__";
   const Z_BASE = 2147483000;
   const UI_FONT = 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+  let AGENT_INJECT_TRIES = 0;
   let EXT_ORIGIN = "*";
   try { EXT_ORIGIN = new URL(chrome.runtime.getURL(""))?.origin || "*"; } catch {}
 
@@ -23,6 +24,12 @@
     if (msg?.type === "AB_GET_AGENT_STATE") {
       const open = !!document.getElementById(AGENT_IFRAME_ID);
       try { sendResponse({ open }); } catch {}
+    }
+    if (msg?.type === 'AB_AGENT_FACE') {
+      try {
+        const iframe = document.getElementById(AGENT_IFRAME_ID);
+        iframe?.contentWindow?.postMessage({ type: 'AB_FACE', face: msg.face, revertMs: msg.revertMs }, EXT_ORIGIN || '*');
+      } catch {}
     }
   });
 
@@ -43,7 +50,7 @@
     if (data.type === "AB_CLOSE_TOP" || data.type === "SHORTS_OVERLAY_CLOSE") closeTopOverlay();
     if (data.type === "AB_AGENT_RESIZE") resizeAgent(data.width, data.height);
     if (data.type === "AB_CLOSE_AGENT") closeAgent();
-    if (data.type === "AB_GET_PAGE_TEXT") sendPageTextToAgent();
+    if (data.type === "AB_GET_PAGE_TEXT") sendPageTextToAgent(data.id);
   });
 
   function resizeAgent(w, h) {
@@ -71,14 +78,22 @@
     const iframe = document.createElement("iframe");
     iframe.id = AGENT_IFRAME_ID;
     const url = extUrl("agent/agent.html");
-    if (!url) return; // extension context invalidated; do nothing gracefully
+    if (!url) {
+      // Extension just reloaded; retry a few times so agent appears without manual refresh
+      if (AGENT_INJECT_TRIES < 5) {
+        AGENT_INJECT_TRIES++;
+        setTimeout(injectAgent, 600);
+      }
+      return;
+    }
+    AGENT_INJECT_TRIES = 0;
     iframe.src = url;
     Object.assign(iframe.style, {
       position: "fixed",
       bottom: "16px",
       right: "16px",
-      width: "80px",
-      height: "80px",
+      width: "100px",
+      height: "100px",
       border: "0",
       zIndex: String(Z_BASE + 100),
       borderRadius: "20px",
@@ -94,15 +109,43 @@
     overlays.at(-1)?.remove();
   }
 
+  function removeOverlaysByModule(module) {
+    try {
+      const list = Array.from(document.querySelectorAll(`.${OVERLAY_CLASS}`));
+      for (const el of list) {
+        const mod = el.dataset?.abModule || '';
+        if (mod === module) { el.remove(); continue; }
+        // Legacy overlays without dataset: detect by iframe src/srcdoc
+        const ifr = el.querySelector('iframe');
+        const txt = (el.textContent || '').toLowerCase();
+        if (module === 'video') {
+          const src = (ifr && ifr.src) ? String(ifr.src) : '';
+          if (src.includes('/features/video/') || txt.includes('extension reloaded')) { el.remove(); }
+        }
+        if (module === 'tictactoe') {
+          const src = (ifr && ifr.src) ? String(ifr.src) : '';
+          if (src.includes('/features/games/tictactoe/')) { el.remove(); }
+        }
+        if (module === 'fidgit') {
+          const src = (ifr && ifr.src) ? String(ifr.src) : '';
+          if (src.includes('/features/fidgit/')) { el.remove(); }
+        }
+      }
+    } catch {}
+  }
+
   function openVideoOverlay(payload) {
     const wrap = document.createElement("div");
     wrap.className = OVERLAY_CLASS;
+    // Ensure only one video overlay exists at a time (remove legacy too)
+    removeOverlaysByModule('video');
+    wrap.dataset.abModule = 'video';
     Object.assign(wrap.style, {
       position: "fixed",
-      left: "calc(100vw - 380px - 16px)",
-      top: "calc(100vh - 680px - 16px - 96px)",
-      width: "380px",
-      height: "680px",
+      left: "calc(100vw - 320px - 16px)",
+      top: "calc(100vh - 568px - 16px - 120px)",
+      width: "320px",
+      height: "568px",
       zIndex: String(Z_BASE + 200 + document.querySelectorAll(`.${OVERLAY_CLASS}`).length),
       borderRadius: "14px",
       border: "1px solid rgba(255,255,255,.12)",
@@ -148,8 +191,18 @@
     hdr.appendChild(btnClose);
 
     const frame = document.createElement("iframe");
+    try {
+      frame.allow = "autoplay; encrypted-media; fullscreen; picture-in-picture";
+      frame.setAttribute("allowfullscreen", "");
+    } catch {}
     const vidUrl = extUrl("features/video/video.html");
-    if (vidUrl) frame.src = vidUrl; else frame.srcdoc = `<html><body style="margin:0;display:grid;place-items:center;background:#000;color:#fff;font-family:ui-sans-serif,system-ui">Extension reloaded. Reload page to continue.</body></html>`;
+    if (vidUrl) {
+      frame.src = vidUrl;
+    } else {
+      try { wrap.remove(); } catch {}
+      setTimeout(() => { try { openVideoOverlay(payload); } catch {} }, 800);
+      return;
+    }
     Object.assign(frame.style, {
       width: "100%",
       height: "100%",
@@ -172,10 +225,13 @@
   function openTicTacToeOverlay(payload) {
     const wrap = document.createElement("div");
     wrap.className = OVERLAY_CLASS;
+    // Ensure only one tictactoe overlay exists at a time (remove legacy too)
+    removeOverlaysByModule('tictactoe');
+    wrap.dataset.abModule = 'tictactoe';
     Object.assign(wrap.style, {
       position: "fixed",
       left: "calc(100vw - 360px - 16px)",
-      top: "calc(100vh - 480px - 16px - 96px)",
+      top: "calc(100vh - 480px - 16px - 120px)",
       width: "360px",
       height: "480px",
       zIndex: String(Z_BASE + 200 + document.querySelectorAll(`.${OVERLAY_CLASS}`).length),
@@ -259,10 +315,13 @@
   function openFidgitOverlay(payload) {
     const wrap = document.createElement("div");
     wrap.className = OVERLAY_CLASS;
+    // Ensure only one fidgit overlay exists at a time (remove legacy too)
+    removeOverlaysByModule('fidgit');
+    wrap.dataset.abModule = 'fidgit';
     Object.assign(wrap.style, {
       position: "fixed",
       left: "calc(100vw - 360px - 16px)",
-      top: "calc(100vh - 480px - 16px - 96px)",
+      top: "calc(100vh - 480px - 16px - 120px)",
       width: "360px",
       height: "480px",
       zIndex: String(Z_BASE + 200 + document.querySelectorAll(`.${OVERLAY_CLASS}`).length),
@@ -463,7 +522,7 @@
     window.addEventListener('resize', () => { resizeBubbles(); recalcSpinnerGeometry(); });
   }
 
-  function sendPageTextToAgent() {
+  function sendPageTextToAgent(reqId) {
     try {
       const title = document.title || "";
       const desc = document.querySelector('meta[name="description"]')?.content || "";
@@ -473,7 +532,7 @@
       const maxLen = 3000;
       const snippet = combined.slice(0, maxLen);
       const iframe = document.getElementById(AGENT_IFRAME_ID);
-      iframe?.contentWindow?.postMessage({ type: 'AB_PAGE_TEXT', text: snippet }, EXT_ORIGIN);
+      iframe?.contentWindow?.postMessage({ type: 'AB_PAGE_TEXT', text: snippet, id: reqId }, EXT_ORIGIN);
     } catch {}
   }
 
@@ -508,4 +567,6 @@
   // Auto-inject agent on first run of the tab
   injectAgent();
 })();
+
+
 

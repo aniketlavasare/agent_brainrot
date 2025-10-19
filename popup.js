@@ -1,5 +1,6 @@
 (() => {
   const geminiKeyEl = document.getElementById('geminiKey');
+  const ytKeyEl = document.getElementById('ytKey');
   const keywordsEl = document.getElementById('keywords');
   const shortsOnlyEl = document.getElementById('shortsOnly');
   const statusEl = document.getElementById('status');
@@ -29,8 +30,9 @@
 
   function load() {
     try {
-      chrome.storage.local.get(['ab_gemini_api_key','ab_feed_keywords','ab_shorts_only','ab_eleven_api_key','ab_eleven_voice_id'], (res) => {
+      chrome.storage.local.get(['ab_gemini_api_key','ab_yt_api_key','ab_feed_keywords','ab_shorts_only','ab_eleven_api_key','ab_eleven_voice_id'], (res) => {
         geminiKeyEl.value = res?.ab_gemini_api_key || '';
+        ytKeyEl.value = res?.ab_yt_api_key || '';
         keywordsEl.value = joinKeywords(res?.ab_feed_keywords || []);
         shortsOnlyEl.checked = res?.ab_shorts_only !== false; // default true
         elevenKeyEl.value = res?.ab_eleven_api_key || '';
@@ -41,10 +43,18 @@
 
   saveBtn.addEventListener('click', () => {
     const apiKey = (geminiKeyEl.value || '').trim();
+    const ytKey = (ytKeyEl.value || '').trim();
     const kw = parseKeywords(keywordsEl.value);
     const so = !!shortsOnlyEl.checked;
     try {
-      chrome.storage.local.set({ ab_gemini_api_key: apiKey, ab_feed_keywords: kw, ab_shorts_only: so, ab_eleven_api_key: (elevenKeyEl.value||'').trim(), ab_eleven_voice_id: (elevenVoiceEl.value||'').trim() }, () => {
+      chrome.storage.local.set({ 
+        ab_gemini_api_key: apiKey, 
+        ab_yt_api_key: ytKey,
+        ab_feed_keywords: kw, 
+        ab_shorts_only: so, 
+        ab_eleven_api_key: (elevenKeyEl.value||'').trim(), 
+        ab_eleven_voice_id: (elevenVoiceEl.value||'').trim() 
+      }, () => {
         show('Saved');
       });
     } catch (e) {
@@ -54,10 +64,13 @@
 
   clearBtn.addEventListener('click', () => {
     geminiKeyEl.value = '';
+    ytKeyEl.value = '';
     keywordsEl.value = '';
     shortsOnlyEl.checked = true;
+    elevenKeyEl.value = '';
+    elevenVoiceEl.value = '';
     try {
-      chrome.storage.local.remove(['ab_gemini_api_key','ab_feed_keywords','ab_shorts_only','ab_eleven_api_key','ab_eleven_voice_id'], () => show('Cleared'));
+      chrome.storage.local.remove(['ab_gemini_api_key','ab_yt_api_key','ab_feed_keywords','ab_shorts_only','ab_eleven_api_key','ab_eleven_voice_id'], () => show('Cleared'));
     } catch (e) {
       show('Failed to clear', false);
     }
@@ -93,7 +106,8 @@
       await chrome.tabs.sendMessage(tab.id, { type: 'AB_TOGGLE_AGENT' });
       // If switching on, speak immediately (user gesture ensures autoplay)
       if (toggleSwitch.checked) {
-        try { window.ABTTS?.speak('Howdy!', { volume: 0.9 }); } catch {}
+        try { window.ABTTS?.speak('Howdy! Fella?', { volume: 0.7 }); } catch {}
+        try { setTimeout(() => chrome.tabs.sendMessage(tab.id, { type: 'AB_AGENT_FACE', face: 'smile', revertMs: 2600 }), 250); } catch {}
       }
       setTimeout(refreshToggleLabel, 150);
     } catch {
@@ -102,6 +116,7 @@
         await chrome.tabs.sendMessage(tab.id, { type: 'AB_TOGGLE_AGENT' });
         if (toggleSwitch.checked) {
           try { window.ABTTS?.speak('Howdy!', { volume: 0.9 }); } catch {}
+          try { setTimeout(() => chrome.tabs.sendMessage(tab.id, { type: 'AB_AGENT_FACE', face: 'smile', revertMs: 2600 }), 300); } catch {}
         }
         setTimeout(refreshToggleLabel, 200);
       } catch {}

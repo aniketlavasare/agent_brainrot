@@ -37,6 +37,10 @@
     <input id="geminiKey" class="ui-input" type="text" placeholder="Enter your Gemini API key" />
     <div class="hint">Required for jokes feature. Get it from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>.</div>
 
+    <label for="ytKey">YouTube API Key</label>
+    <input id="ytKey" class="ui-input" type="text" placeholder="Enter your YouTube API key" />
+    <div class="hint">Required for video shorts. Get it from <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a>.</div>
+
     <label for="elevenKey">ElevenLabs API Key</label>
     <input id="elevenKey" class="ui-input" type="text" placeholder="Enter your ElevenLabs API key" />
     <div class="hint">Used for agent speech (Howdy!). Get it from <a href="https://api.elevenlabs.io/" target="_blank">ElevenLabs</a>.</div>
@@ -62,7 +66,7 @@
       </div>
     </div>
 
-    <script src="features/tts/eleven.js"></script>
+    <script src="features/tts/eleven_safe.js"></script>
     <script src="popup.js"></script>
   </body>
   </html>

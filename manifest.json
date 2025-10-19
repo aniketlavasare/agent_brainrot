@@ -48,6 +48,7 @@
         "features/fidgit/fidgit.js",
         "features/jokes/jokes.js",
         "features/tts/eleven.js",
+        "features/tts/eleven_safe.js",
         "assets/*",
         "common/ui.css"
       ],
