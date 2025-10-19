@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Agent Brainrot",
+  "version": "1.1.0",
+  "description": "An always-on corner agent that spawns brainrot (videos, jokes, games).",
+  "permissions": ["storage", "scripting", "activeTab"],
+  "host_permissions": ["https://*/*", "http://*/*"],
+  "action": { "default_title": "Toggle Agent Brainrot" },
+  "background": { "service_worker": "background.js" },
+  "commands": {
+    "toggle-agent": {
+      "suggested_key": { "default": "Alt+Shift+B" },
+      "description": "Toggle Agent Brainrot"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "agent/agent.html",
+        "agent/agent.css",
+        "agent/agent.js",
+        "features/video/video.html",
+        "features/video/video.css",
+        "features/video/video.js",
+        "assets/*",
+        "common/ui.css"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

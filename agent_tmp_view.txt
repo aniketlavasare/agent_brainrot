@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../common/ui.css" />
+    <link rel="stylesheet" href="agent.css" />
+  </head>
+  <body>
+    <button class="ab-bubble" title="Agent Brainrot">
+      <img class="ab-face" src="../assets/face_default.png" alt="AB" />
+    </button>
+
+    <div class="ab-menu">
+      <div class="ab-group">Play</div>
+      <button data-module="video">🎬 Video</button>
+
+      <div class="ab-group">Soon</div>
+      <button disabled>😂 Jokes</button>
+      <button disabled>🎮 Games</button>
+      <button disabled>🌀 Fidget</button>
+    </div>
+
+    <script src="agent.js"></script>
+  </body>
+</html>
+

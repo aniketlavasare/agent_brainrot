@@ -1,0 +1,50 @@
+:root { --ab-bg: rgba(22,22,22,.95); --ab-fg: #fff; --ab-accent: #7cf; }
+
+html,body { margin:0; padding:0; background:transparent; }
+body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+
+.ab-bubble {
+  position: absolute; bottom: 0; right: 0;
+  width: 80px; height: 80px;
+  border-radius: 20px; border: 0;
+  background: var(--ab-bg); color: var(--ab-fg);
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  cursor: pointer; padding: 0;
+  display: grid; place-items: center;
+}
+
+.ab-face { width: 56px; height: 56px; border-radius: 14px; }
+
+.ab-menu {
+  position: absolute; bottom: 88px; right: 0;
+  display: none; flex-direction: column; gap: 6px;
+  background: var(--ab-bg); color: var(--ab-fg);
+  padding: 10px; border-radius: 12px;
+  min-width: 160px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+
+.ab-group { opacity: .7; font-size: 12px; margin-top: 6px; }
+
+.ab-menu button {
+  all: unset; padding: 8px 10px; border-radius: 8px; cursor: pointer;
+}
+.ab-menu button:hover { background: rgba(255,255,255,.08); }
+.ab-menu button[disabled] { opacity: .4; cursor: not-allowed; }
+
+.ab-menu.open { display: flex; }
+
+/* small close button that appears on hover */
+.ab-close {
+  position: absolute; bottom: 6px; right: 6px;
+  width: 22px; height: 22px;
+  border-radius: 6px; border: 0;
+  background: rgba(255,255,255,0.9);
+  color: #111; font-weight: 700; line-height: 1;
+  display: none; place-items: center;
+  cursor: pointer;
+}
+.ab-bubble:hover ~ .ab-close,
+.ab-menu:hover ~ .ab-close,
+.ab-menu.open ~ .ab-close,
+.ab-close:hover { display: grid; }
