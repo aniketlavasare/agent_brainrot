@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="dark" />
+    <title>Fidget(s)</title>
+    <link rel="stylesheet" href="../../common/ui.css" />
+    <link rel="stylesheet" href="fidgit.css" />
+  </head>
+  <body>
+    <div id="wrap">
+      <header id="hud">
+        <div class="row">
+          <label for="mode">Fidget</label>
+          <select id="mode" class="ui-select" aria-label="Fidget mode">
+            <option value="bubbles" selected>Bubble Pop</option>
+            <option value="spinner">Spinner</option>
+          </select>
+          <div class="spacer"></div>
+          <button id="sound" class="ui-btn ghost" title="Sound">
+            <span id="soundIcon">Off</span>
+          </button>
+        </div>
+      </header>
+
+      <main id="stage">
+        <div id="bubbles" class="panel" hidden></div>
+        <div id="spinner" class="panel" hidden>
+          <div id="wheelWrap">
+            <div id="wheel"></div>
+            <div id="knob" aria-label="Spin knob" role="button" tabindex="0"></div>
+          </div>
+        </div>
+      </main>
+
+      <footer id="status" aria-live="polite"></footer>
+    </div>
+
+    <script src="fidgit.js"></script>
+  </body>
+  </html>
+
+

@@ -126,6 +126,29 @@
       if (result.p === 'X') stats.w++; else stats.l++;
       updateScore();
       saveStats();
+      // If AI (O) wins, throw a playful taunt via jokes
+      if (result.p === 'O') {
+        try {
+          const prompt = 'Tic-Tac-Toe loss taunt: 1 playful, short (<= 100 chars), no quotes, SFW.';
+          const p = (window.ABJokes?.jokeForContext(prompt) || Promise.reject(new Error('no jokes')));
+          p.then((line) => {
+            if (!finished) return; // ignore if game reset
+            const msg = String(line || '').trim();
+            if (msg) setStatus(`${result.p} wins!\n${msg}`);
+          }).catch(() => {
+            // fallback
+            const taunts = [
+              'Ouch. The O was on point!',
+              'GG! The O-bot strikes again.',
+              'Next time, center first.',
+              'Calculated. Cold. Victorious.',
+              'That was a textbook trap.'
+            ];
+            const msg = taunts[Math.floor(Math.random()*taunts.length)];
+            setStatus(`${result.p} wins!\n${msg}`);
+          });
+        } catch {}
+      }
     } else {
       setStatus(`Draw.`);
       stats.d++;

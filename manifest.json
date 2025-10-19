@@ -18,7 +18,7 @@
   },
   "background": { "service_worker": "background.js" },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; base-uri 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://www.googleapis.com https://*.googleapis.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;"
+    "extension_pages": "script-src 'self'; object-src 'self'; base-uri 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://www.googleapis.com https://*.googleapis.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; frame-ancestors *;"
   },
   "commands": {
     "toggle-agent": {
@@ -39,6 +39,9 @@
         "features/games/tictactoe/tictactoe.html",
         "features/games/tictactoe/tictactoe.css",
         "features/games/tictactoe/tictactoe.js",
+        "features/fidgit/fidgit.html",
+        "features/fidgit/fidgit.css",
+        "features/fidgit/fidgit.js",
         "features/jokes/jokes.js",
         "assets/*",
         "common/ui.css"

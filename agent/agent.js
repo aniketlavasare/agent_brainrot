@@ -41,6 +41,9 @@ menu.addEventListener("click", (e) => {
   if (module === "tictactoe") {
     window.top?.postMessage({ type: "AB_OPEN", module: "tictactoe", payload: {} }, "*");
   }
+  if (module === "fidgit") {
+    window.top?.postMessage({ type: "AB_OPEN", module: "fidgit", payload: {} }, "*");
+  }
   // close the menu after selection
   closeMenu();
 });
