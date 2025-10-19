@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agent Brainrot — Preferences</title>
+    <style>
+      :root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+      body { margin: 0; padding: 12px; width: 320px; color: #111; }
+      h1 { font-size: 16px; margin: 0 0 8px; }
+      label { display: block; font-size: 12px; margin-top: 10px; opacity: .8; }
+      input[type="text"], textarea { width: 100%; box-sizing: border-box; padding: 8px; border-radius: 8px; border: 1px solid #ddd; }
+      textarea { min-height: 64px; resize: vertical; }
+      .row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+      .hint { font-size: 11px; opacity: .7; }
+      .actions { margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end; }
+      button { cursor: pointer; padding: 8px 10px; border-radius: 8px; border: 0; font-weight: 600; }
+      .primary { background: #111; color: #fff; }
+      .ghost { background: #f3f3f3; }
+      #status { margin-top: 8px; font-size: 12px; opacity: .9; }
+    </style>
+  </head>
+  <body>
+    <h1>Agent Brainrot — Preferences</h1>
+    <div class="row" style="justify-content: space-between">
+      <div class="hint">Manage feed keywords and settings.</div>
+      <button id="toggle" class="ghost" title="Toggle Agent">Open Agent</button>
+    </div>
+
+    <label for="keywords">Feed Keywords</label>
+    <textarea id="keywords" placeholder="e.g. funny, cats, memes"></textarea>
+    <div class="hint">Comma or newline‑separated. Used to build your Shorts feed.</div>
+
+    <div class="row">
+      <input id="shortsOnly" type="checkbox" checked />
+      <label for="shortsOnly" style="margin:0">Shorts only</label>
+    </div>
+
+    <div class="actions">
+      <button id="save" class="primary">Save</button>
+      <button id="clear" class="ghost">Clear</button>
+    </div>
+    <div id="status" aria-live="polite"></div>
+
+    <script src="popup.js"></script>
+  </body>
+  </html>

@@ -6,24 +6,47 @@ html, body {
   padding: 0;
   width: 100%; height: 100%;
   background: transparent;
-  overflow: hidden; /* remove any scrollbars */
+  overflow: hidden; /* the reel manages its own scroll */
 }
 
-.bar {
-  position: absolute; top: 8px; left: 8px; right: 8px;
-  display: flex; gap: 8px; align-items: center;
-  padding: 6px 8px;
-  background: rgba(15,15,15,0.55);
-  color: #fff;
-  border-radius: 10px;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  z-index: 2; /* sit above the YouTube player */
-  opacity: 0; pointer-events: none; transform: translateY(-4px);
-  transition: opacity .18s ease, transform .18s ease;
+#playerWrap {
+  position: relative;
+  width: 100%;
+  height: 100%; /* fill the iframe area exactly */
+  background: #000;
 }
-/* reveal minimal controls on hover/focus */
-#playerWrap:hover .bar, .bar:focus-within { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+/* close button removed per request */
+
+#reel {
+  position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  /* hide scrollbars across browsers */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+#reel::-webkit-scrollbar { display: none; }
+
+.slide {
+  position: relative; width: 100%; height: 100%;
+  scroll-snap-align: start; scroll-snap-stop: always;
+  display: grid; place-items: center;
+  background: #000;
+}
+
+.slide iframe { width: 100%; height: 100%; border: 0; background: #000; }
+
+/* Hover navigation arrows */
+.arrow {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  width: 36px; height: 36px; border-radius: 50%; border: 0;
+  display: none; place-items: center; cursor: pointer;
+  background: rgba(15,15,15,0.75); color: #fff; font-size: 16px; font-weight: 700;
+  z-index: 4;
+}
+#navUp { top: 10px; }
+#navDown { bottom: 10px; }
+#playerWrap:hover .arrow, .arrow:hover { display: grid; }
 
 #url {
   flex: 1;
@@ -43,17 +66,6 @@ button {
 
 #close { background: #ff3b30; color: white; }
 
-#playerWrap {
-  position: relative;
-  width: 100%;
-  height: 100%; /* fill the iframe area exactly */
-  background: #000;
-}
-
-#player {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  border: 0; /* the outer iframe already has rounded corners */
-  z-index: 1;
-}
+/* remove legacy player styles */
 
 /* removed tips for a minimal UI */

@@ -1,0 +1,133 @@
+const urlInput = document.getElementById("url");
+const playBtn  = document.getElementById("play");
+const closeBtn = document.getElementById("close");
+const player   = document.getElementById("player");
+const feedEl   = document.getElementById("feed");
+
+// restore last URL
+const KEY = "shorts_overlay_last_url";
+chrome.storage?.local.get([KEY], (res) => {
+  if (res?.[KEY]) {
+    urlInput.value = res[KEY];
+    loadVideoFrom(urlInput.value);
+  }
+});
+
+// Make it easy to paste immediately after opening
+try { setTimeout(() => urlInput?.focus({ preventScroll: true }), 0); } catch {}
+
+async function getPrefs() {
+  return new Promise((resolve) => {
+    try {
+      chrome.storage?.local.get(['ab_feed_keywords','ab_shorts_only'], (res) => {
+        resolve({
+          keywords: Array.isArray(res?.ab_feed_keywords) ? res.ab_feed_keywords : [],
+          shortsOnly: res?.ab_shorts_only !== false
+        });
+      });
+    } catch { resolve({ keywords: [], shortsOnly: true }); }
+  });
+}
+
+function renderFeed(items) {
+  if (!feedEl) return;
+  feedEl.innerHTML = '';
+  (items || []).slice(0,5).forEach((v) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <img class="thumb" alt="" src="${v.thumb || ''}"/>
+      <div class="title" title="${v.title || ''}">${v.title || ''}</div>
+    `;
+    card.addEventListener('click', () => {
+      if (v.url) {
+        urlInput.value = v.url;
+        loadVideoFrom(v.url);
+      }
+    });
+    feedEl.appendChild(card);
+  });
+}
+
+async function loadFeedFromPrefs(overrideTopic) {
+  if (!window.ABYoutube) return;
+  const { keywords, shortsOnly } = await getPrefs();
+  const topic = overrideTopic || (keywords.length ? keywords.join(' ') : 'funny');
+  try {
+    const items = await window.ABYoutube.searchYouTube(`${topic} #shorts`, { shortsOnly: shortsOnly !== false, maxResults: 5 });
+    renderFeed(items);
+  } catch (e) {
+    console.warn('Feed load failed', e);
+  }
+}
+
+// Optional: respond to init topic from parent
+window.addEventListener("message", async (e) => {
+  const data = e?.data || {};
+  if (data.type === "AB_VIDEO_INIT") {
+    const topic = data?.payload?.topic;
+    if (topic && window.ABYoutube) {
+      try {
+        // Load feed for the topic; still allow manual paste/play
+        await loadFeedFromPrefs(topic);
+      } catch (err) {
+        console.warn("YT init search failed", err);
+      }
+    }
+  }
+});
+
+function extractVideoIdAnyYouTube(url) {
+  try {
+    const u = new URL(url.trim());
+    // shorts: /shorts/VIDEO_ID
+    const shortsMatch = u.pathname.match(/^\/shorts\/([a-zA-Z0-9_-]{6,})/);
+    if (shortsMatch) return shortsMatch[1];
+
+    // watch?v=VIDEO_ID
+    const v = u.searchParams.get("v");
+    if (v) return v;
+
+    // youtu.be/VIDEO_ID
+    const yb = u.hostname.endsWith("youtu.be") ? u.pathname.slice(1) : null;
+    if (yb) return yb;
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function embedUrl(videoId) {
+  // Same embed works for Shorts and normal videos
+  // Add modest UI and autoplay
+  return `https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1&modestbranding=1&rel=0&controls=1`;
+}
+
+function loadVideoFrom(link) {
+  const id = extractVideoIdAnyYouTube(link);
+  if (!id) {
+    alert("Couldn't find a video ID in that URL.");
+    return;
+  }
+  player.src = embedUrl(id);
+  try {
+    chrome.storage?.local.set({ [KEY]: link });
+  } catch {}
+}
+
+playBtn.addEventListener("click", () => loadVideoFrom(urlInput.value));
+urlInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") loadVideoFrom(urlInput.value);
+});
+closeBtn.addEventListener("click", () => {
+  // Ask the content script (parent page) to remove the iframe via postMessage.
+  // The content script validates the origin before acting.
+  try {
+    window.parent.postMessage({ type: "SHORTS_OVERLAY_CLOSE" }, "*");
+  } catch {}
+});
+
+// Initial feed on load
+loadFeedFromPrefs();
+

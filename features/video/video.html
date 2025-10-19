@@ -8,19 +8,14 @@
   </head>
   <body>
     <div id="playerWrap">
-      <!-- Minimal controls overlay inside the video area -->
-      <div class="bar" role="toolbar">
-        <input id="url" type="text" placeholder="Paste YouTube or Shorts URL" aria-label="YouTube URL" autofocus />
-        <button id="play" title="Play" aria-label="Play">&#9654;</button>
-        <button id="close" title="Close" aria-label="Close">&times;</button>
-      </div>
-
-      <!-- The YouTube iframe goes here -->
-      <iframe id="player" allow="autoplay; encrypted-media; picture-in-picture"
-        frameborder="0" allowfullscreen></iframe>
+      <!-- Vertical scroll feed with snap -->
+      <div id="reel" role="list" aria-label="Shorts feed"></div>
+      <!-- Hover navigation arrows -->
+      <button id="navUp" class="arrow" title="Previous" aria-label="Previous">&#9650;</button>
+      <button id="navDown" class="arrow" title="Next" aria-label="Next">&#9660;</button>
     </div>
 
+    <script src="yt.js"></script>
     <script src="video.js"></script>
   </body>
 </html>
-
