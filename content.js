@@ -5,6 +5,7 @@
   const AGENT_IFRAME_ID = "__ab_agent_iframe__";
   const OVERLAY_CLASS = "__ab_overlay__";
   const Z_BASE = 2147483000;
+  const UI_FONT = 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
   let EXT_ORIGIN = "*";
   try { EXT_ORIGIN = new URL(chrome.runtime.getURL(""))?.origin || "*"; } catch {}
 
@@ -96,7 +97,8 @@
       border: "1px solid rgba(255,255,255,.12)",
       boxShadow: "0 12px 32px rgba(0,0,0,.35)",
       overflow: "hidden",
-      background: "#000"
+      background: "#000",
+      fontFamily: UI_FONT
     });
 
     // lightweight chrome: drag handle + close
@@ -171,7 +173,8 @@
       boxShadow: "0 12px 32px rgba(0,0,0,.35)",
       overflow: "hidden",
       background: "#111",
-      color: "#fff"
+      color: "#fff",
+      fontFamily: UI_FONT
     });
 
     const hdr = document.createElement("div");
@@ -196,7 +199,7 @@
     const btnClose = document.createElement("button"); btnClose.textContent = "\u00D7"; Object.assign(btnClose.style, { all: "unset", width: "22px", height: "22px", display: "grid", placeItems: "center", borderRadius: "6px", background: "rgba(255,255,255,.15)", cursor: "pointer" }); btnClose.title = "Close"; btnClose.addEventListener("click", () => { wrap.remove(); });
     hdr.appendChild(title); hdr.appendChild(btnClose);
 
-    const inner = document.createElement("div"); Object.assign(inner.style, { position: "absolute", inset: "34px 0 0 0", display: "grid", gridTemplateRows: "auto 1fr auto", gap: "8px" });
+    const inner = document.createElement("div"); Object.assign(inner.style, { position: "absolute", inset: "34px 0 0 0", display: "grid", gridTemplateRows: "auto 1fr auto", gap: "8px", fontFamily: UI_FONT });
     const toolbar = document.createElement("div"); Object.assign(toolbar.style, { display: "flex", alignItems: "center", gap: "8px", padding: "8px", borderBottom: "1px solid rgba(255,255,255,.12)" });
     const lab = document.createElement("label"); lab.textContent = "Mode"; Object.assign(lab.style, { fontSize: "12px", opacity: ".8" });
     const sel = document.createElement("select"); Object.assign(sel.style, { background: "rgba(255,255,255,.08)", color: "#fff", border: "1px solid rgba(255,255,255,.15)", borderRadius: "8px", padding: "6px 8px" }); sel.innerHTML = `<option value="ai_block" selected>vs AI - Smart</option><option value="ai_random">vs AI - Random</option><option value="self">vs Self</option>`;
@@ -257,7 +260,8 @@
       boxShadow: "0 12px 32px rgba(0,0,0,.35)",
       overflow: "hidden",
       background: "#111",
-      color: "#fff"
+      color: "#fff",
+      fontFamily: UI_FONT
     });
 
     const hdr = document.createElement("div");
@@ -309,7 +313,7 @@
       bottom: 0,
       display: "grid",
       gridTemplateRows: "auto 1fr",
-      fontFamily: "ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif"
+      fontFamily: UI_FONT
     });
 
     const toolbar = document.createElement("div");
