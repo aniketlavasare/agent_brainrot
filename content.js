@@ -7,45 +7,40 @@
   const Z_BASE = 2147483000;
   const EXT_ORIGIN = new URL(chrome.runtime.getURL(""))?.origin;
 
-  // Listen for messages from background and agent iframe
+  // Background → content toggle
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg?.type === "AB_TOGGLE_AGENT") toggleAgent();
   });
 
+  // Messages from agent/video iframes
   window.addEventListener("message", (e) => {
-    // Only accept messages from our extension pages (agent/video iframes)
     if (e.origin !== EXT_ORIGIN) return;
     const data = e.data || {};
-    if (data.type === "AB_OPEN") {
-      if (data.module === "video") openVideoOverlay(data.payload || {});
-    }
-    if (data.type === "AB_CLOSE_TOP") closeTopOverlay();
-    if (data.type === "SHORTS_OVERLAY_CLOSE") closeTopOverlay();
-    if (data.type === "AB_AGENT_RESIZE") {
-      const iframe = document.getElementById(AGENT_IFRAME_ID);
-      if (iframe) {
-        if (typeof data.width === "number") iframe.style.width = `${data.width}px`;
-        if (typeof data.height === "number") iframe.style.height = `${data.height}px`;
-      }
-    }
-    if (data.type === "AB_CLOSE_AGENT") {
-      const existing = document.getElementById(AGENT_IFRAME_ID);
-      existing?.remove();
-      // remove any open overlays as well
-      document.querySelectorAll(`.${OVERLAY_CLASS}`).forEach((el) => el.remove());
-    }
+    if (data.type === "AB_OPEN" && data.module === "video") openVideoOverlay(data.payload || {});
+    if (data.type === "AB_CLOSE_TOP" || data.type === "SHORTS_OVERLAY_CLOSE") closeTopOverlay();
+    if (data.type === "AB_AGENT_RESIZE") resizeAgent(data.width, data.height);
+    if (data.type === "AB_CLOSE_AGENT") closeAgent();
   });
 
-  // ----- Agent toggling -----
+  function resizeAgent(w, h) {
+    const iframe = document.getElementById(AGENT_IFRAME_ID);
+    if (!iframe) return;
+    if (typeof w === "number") iframe.style.width = `${w}px`;
+    if (typeof h === "number") iframe.style.height = `${h}px`;
+  }
+
+  function closeAgent() {
+    document.getElementById(AGENT_IFRAME_ID)?.remove();
+    document.querySelectorAll(`.${OVERLAY_CLASS}`).forEach((el) => el.remove());
+  }
+
   function toggleAgent() {
     const existing = document.getElementById(AGENT_IFRAME_ID);
     if (existing) {
-      existing.remove();
-      // Also remove any open overlays when agent hides
-      document.querySelectorAll(`.${OVERLAY_CLASS}`).forEach((el) => el.remove());
-      return;
+      closeAgent();
+    } else {
+      injectAgent();
     }
-    injectAgent();
   }
 
   function injectAgent() {
@@ -66,40 +61,13 @@
     document.documentElement.appendChild(iframe);
   }
 
-  // ----- Overlay manager helpers -----
-  function makeDraggable(container, handle) {
-    let drag = false, sx = 0, sy = 0, sl = 0, st = 0;
-    const down = (e) => {
-      drag = true;
-      sx = e.clientX; sy = e.clientY;
-      const rect = container.getBoundingClientRect();
-      sl = rect.left; st = rect.top;
-      document.addEventListener("mousemove", move);
-      document.addEventListener("mouseup", up);
-    };
-    const move = (e) => {
-      if (!drag) return;
-      const dx = e.clientX - sx;
-      const dy = e.clientY - sy;
-      container.style.left = Math.max(0, sl + dx) + "px";
-      container.style.top  = Math.max(0, st + dy) + "px";
-    };
-    const up = () => {
-      drag = false;
-      document.removeEventListener("mousemove", move);
-      document.removeEventListener("mouseup", up);
-    };
-    handle.addEventListener("mousedown", down);
-  }
-
   function closeTopOverlay() {
     const overlays = [...document.querySelectorAll(`.${OVERLAY_CLASS}`)];
     if (!overlays.length) return;
-    overlays.sort((a, b) => parseInt(a.style.zIndex||0)-parseInt(b.style.zIndex||0));
+    overlays.sort((a, b) => parseInt(a.style.zIndex||0) - parseInt(b.style.zIndex||0));
     overlays.at(-1)?.remove();
   }
 
-  // ----- VIDEO MODULE (Phase 2) -----
   function openVideoOverlay(payload) {
     const wrap = document.createElement("div");
     wrap.className = OVERLAY_CLASS;
@@ -113,65 +81,93 @@
       borderRadius: "14px",
       boxShadow: "0 12px 32px rgba(0,0,0,.35)",
       overflow: "hidden",
-      background: "transparent"
+      background: "#000"
     });
 
-    // title/drag bar
-    const bar = document.createElement("div");
-    Object.assign(bar.style, {
-      height: "40px",
-      background: "rgba(18,18,18,.95)",
+    // lightweight chrome: drag handle + close
+    const hdr = document.createElement("div");
+    Object.assign(hdr.style, {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      height: "36px",
+      background: "rgba(18,18,18,.6)",
       color: "#fff",
       display: "flex",
       alignItems: "center",
-      justifyContent: "space-between",
-      padding: "0 10px",
+      justifyContent: "flex-end",
+      gap: "8px",
+      padding: "6px 8px",
       cursor: "move",
-      userSelect: "none"
+      userSelect: "none",
+      zIndex: 2
     });
-    bar.innerHTML = `<strong>🎬 Agent Brainrot — Video</strong>
-      <div style="display:flex; gap:8px; align-items:center">
-        <button id="ab-min" style="all:unset;cursor:pointer">—</button>
-        <button id="ab-close" style="all:unset;cursor:pointer">✕</button>
-      </div>`;
+    const btnClose = document.createElement("button");
+    btnClose.textContent = "×";
+    Object.assign(btnClose.style, {
+      all: "unset",
+      width: "24px",
+      height: "24px",
+      display: "grid",
+      placeItems: "center",
+      borderRadius: "6px",
+      background: "rgba(255,255,255,.15)",
+      cursor: "pointer"
+    });
+    btnClose.title = "Close";
+    btnClose.addEventListener("click", () => wrap.remove());
+    hdr.appendChild(btnClose);
 
     const frame = document.createElement("iframe");
     frame.src = chrome.runtime.getURL("features/video/video.html");
     Object.assign(frame.style, {
       width: "100%",
-      height: "calc(100% - 40px)",
+      height: "100%",
       border: "0",
-      background: "black"
+      background: "#000"
     });
 
-    wrap.appendChild(bar);
+    wrap.appendChild(hdr);
     wrap.appendChild(frame);
     document.documentElement.appendChild(wrap);
 
-    // drag
-    makeDraggable(wrap, bar);
+    // enable dragging from header
+    makeDraggable(wrap, hdr);
 
-    // minimize
-    bar.querySelector("#ab-min").addEventListener("click", () => {
-      if (frame.style.display !== "none") {
-        frame.style.display = "none";
-        wrap.style.height = "40px";
-      } else {
-        frame.style.display = "";
-        wrap.style.height = "680px";
-      }
-    });
-
-    // close
-    bar.querySelector("#ab-close").addEventListener("click", () => wrap.remove());
-
-    // send initial payload (e.g., topic) after iframe loads
     frame.addEventListener("load", () => {
       frame.contentWindow.postMessage({ type: "AB_VIDEO_INIT", payload }, "*");
     });
   }
 
+  // Simple draggable helper for fixed-position containers
+  function makeDraggable(container, handle) {
+    let dragging = false;
+    let sx = 0, sy = 0, sl = 0, st = 0;
+    const onDown = (e) => {
+      if (e.button !== 0) return; // left click only
+      dragging = true;
+      sx = e.clientX; sy = e.clientY;
+      const rect = container.getBoundingClientRect();
+      sl = rect.left; st = rect.top;
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    };
+    const onMove = (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - sx;
+      const dy = e.clientY - sy;
+      container.style.left = Math.max(0, sl + dx) + "px";
+      container.style.top  = Math.max(0, st + dy) + "px";
+    };
+    const onUp = () => {
+      dragging = false;
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+    handle.addEventListener("mousedown", onDown);
+  }
+
   // Auto-inject agent on first run of the tab
-  // (Comment out if you prefer manual toggle)
   injectAgent();
 })();

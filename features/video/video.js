@@ -2,7 +2,7 @@ const reel     = document.getElementById("reel");
 const navUp    = document.getElementById("navUp");
 const navDown  = document.getElementById("navDown");
 
-const FEED_COUNT = 5;
+const FEED_COUNT = 10;
 let currentIndex = 0;
 let feedItems = [];
 let scrollTimer;
@@ -100,7 +100,7 @@ navDown?.addEventListener('click', () => move(1));
 async function loadFeedFromPrefs(overrideTopic) {
   if (!window.ABYoutube) return;
   const { keywords, shortsOnly } = await getPrefs();
-  const topic = (keywords.length ? keywords.join(" ") : (overrideTopic || "funny"));
+  const topic = (keywords.length ? keywords.join(" ") : "subway surfer brainrot");
   try {
     if (Array.isArray(keywords) && keywords.length > 1) {
       const per = Math.max(2, Math.ceil(FEED_COUNT / keywords.length));
