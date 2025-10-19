@@ -17,6 +17,7 @@
     if (e.origin !== EXT_ORIGIN) return;
     const data = e.data || {};
     if (data.type === "AB_OPEN" && data.module === "video") openVideoOverlay(data.payload || {});
+    if (data.type === "AB_OPEN" && data.module === "tictactoe") openTicTacToeOverlay(data.payload || {});
     if (data.type === "AB_CLOSE_TOP" || data.type === "SHORTS_OVERLAY_CLOSE") closeTopOverlay();
     if (data.type === "AB_AGENT_RESIZE") resizeAgent(data.width, data.height);
     if (data.type === "AB_CLOSE_AGENT") closeAgent();
@@ -75,11 +76,12 @@
     Object.assign(wrap.style, {
       position: "fixed",
       left: "calc(100vw - 380px - 16px)",
-      top: "calc(100vh - 680px - 16px)",
+      top: "calc(100vh - 680px - 16px - 96px)",
       width: "380px",
       height: "680px",
       zIndex: String(Z_BASE + 200 + document.querySelectorAll(`.${OVERLAY_CLASS}`).length),
       borderRadius: "14px",
+      border: "1px solid rgba(255,255,255,.12)",
       boxShadow: "0 12px 32px rgba(0,0,0,.35)",
       overflow: "hidden",
       background: "#000"
@@ -92,7 +94,7 @@
       top: 0,
       left: 0,
       right: 0,
-      height: "36px",
+      height: "34px",
       background: "rgba(18,18,18,.6)",
       color: "#fff",
       display: "flex",
@@ -108,8 +110,8 @@
     btnClose.textContent = "×";
     Object.assign(btnClose.style, {
       all: "unset",
-      width: "24px",
-      height: "24px",
+      width: "22px",
+      height: "22px",
       display: "grid",
       placeItems: "center",
       borderRadius: "6px",
@@ -138,6 +140,77 @@
 
     frame.addEventListener("load", () => {
       frame.contentWindow.postMessage({ type: "AB_VIDEO_INIT", payload }, "*");
+    });
+  }
+
+  function openTicTacToeOverlay(payload) {
+    const wrap = document.createElement("div");
+    wrap.className = OVERLAY_CLASS;
+    Object.assign(wrap.style, {
+      position: "fixed",
+      left: "calc(100vw - 360px - 16px)",
+      top: "calc(100vh - 480px - 16px - 96px)",
+      width: "360px",
+      height: "480px",
+      zIndex: String(Z_BASE + 200 + document.querySelectorAll(`.${OVERLAY_CLASS}`).length),
+      borderRadius: "14px",
+      border: "1px solid rgba(255,255,255,.12)",
+      boxShadow: "0 12px 32px rgba(0,0,0,.35)",
+      overflow: "hidden",
+      background: "#111"
+    });
+
+    const hdr = document.createElement("div");
+    Object.assign(hdr.style, {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      height: "34px",
+      background: "rgba(18,18,18,.6)",
+      color: "#fff",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "flex-end",
+      gap: "8px",
+      padding: "6px 8px",
+      cursor: "move",
+      userSelect: "none",
+      zIndex: 2
+    });
+    const btnClose = document.createElement("button");
+    btnClose.textContent = "\u00D7";
+    Object.assign(btnClose.style, {
+      all: "unset",
+      width: "22px",
+      height: "22px",
+      display: "grid",
+      placeItems: "center",
+      borderRadius: "6px",
+      background: "rgba(255,255,255,.15)",
+      cursor: "pointer"
+    });
+    btnClose.title = "Close";
+    btnClose.addEventListener("click", () => wrap.remove());
+    hdr.appendChild(btnClose);
+
+    const frame = document.createElement("iframe");
+    frame.src = chrome.runtime.getURL("features/games/tictactoe/tictactoe.html");
+    Object.assign(frame.style, {
+      width: "100%",
+      height: "100%",
+      border: "0",
+      background: "#111"
+    });
+
+    wrap.appendChild(hdr);
+    wrap.appendChild(frame);
+    document.documentElement.appendChild(wrap);
+
+    makeDraggable(wrap, hdr);
+
+    frame.addEventListener("load", () => {
+      try { frame.contentWindow.postMessage({ type: "AB_TTT_INIT", payload }, "*"); } catch {}
     });
   }
 

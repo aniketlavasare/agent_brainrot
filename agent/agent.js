@@ -38,6 +38,9 @@ menu.addEventListener("click", (e) => {
   if (module === "jokes") {
     runJokeFlow();
   }
+  if (module === "tictactoe") {
+    window.top?.postMessage({ type: "AB_OPEN", module: "tictactoe", payload: {} }, "*");
+  }
   // close the menu after selection
   closeMenu();
 });

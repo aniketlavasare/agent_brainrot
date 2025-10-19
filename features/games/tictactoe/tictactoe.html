@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="dark" />
+    <title>Tic-Tac-Toe</title>
+    <link rel="stylesheet" href="../../../common/ui.css" />
+    <link rel="stylesheet" href="tictactoe.css" />
+  </head>
+  <body>
+    <div id="wrap">
+      <header id="hud" aria-live="polite">
+        <div class="row">
+          <label for="mode">Mode</label>
+          <select id="mode" class="ui-select" aria-label="Game mode">
+            <option value="ai_block" selected>vs AI – Smart (block/win)</option>
+            <option value="ai_random">vs AI – Random</option>
+            <option value="self">vs Self (2P)</option>
+          </select>
+          <button id="new" class="ui-btn primary" title="New Game">New</button>
+        </div>
+        <div class="row small">
+          <div id="turn">Turn: X</div>
+          <div class="spacer"></div>
+          <div id="score">W 0 · L 0 · D 0</div>
+          <button id="resetStats" class="ui-btn ghost small" title="Reset Stats">Reset Stats</button>
+        </div>
+      </header>
+
+      <main id="board" role="grid" aria-label="Tic-Tac-Toe board">
+        <!-- 9 cells as buttons for accessibility -->
+        <button class="cell" data-idx="0" role="gridcell" aria-label="Cell 1"></button>
+        <button class="cell" data-idx="1" role="gridcell" aria-label="Cell 2"></button>
+        <button class="cell" data-idx="2" role="gridcell" aria-label="Cell 3"></button>
+        <button class="cell" data-idx="3" role="gridcell" aria-label="Cell 4"></button>
+        <button class="cell" data-idx="4" role="gridcell" aria-label="Cell 5"></button>
+        <button class="cell" data-idx="5" role="gridcell" aria-label="Cell 6"></button>
+        <button class="cell" data-idx="6" role="gridcell" aria-label="Cell 7"></button>
+        <button class="cell" data-idx="7" role="gridcell" aria-label="Cell 8"></button>
+        <button class="cell" data-idx="8" role="gridcell" aria-label="Cell 9"></button>
+      </main>
+
+      <footer id="status" aria-live="polite"></footer>
+    </div>
+
+    <script src="tictactoe.js"></script>
+  </body>
+  </html>
