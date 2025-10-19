@@ -170,7 +170,8 @@
       border: "1px solid rgba(255,255,255,.12)",
       boxShadow: "0 12px 32px rgba(0,0,0,.35)",
       overflow: "hidden",
-      background: "#111"
+      background: "#111",
+      color: "#fff"
     });
 
     const hdr = document.createElement("div");
@@ -184,48 +185,61 @@
       color: "#fff",
       display: "flex",
       alignItems: "center",
-      justifyContent: "flex-end",
+      justifyContent: "space-between",
       gap: "8px",
       padding: "6px 8px",
       cursor: "move",
       userSelect: "none",
       zIndex: 2
     });
-    const btnClose = document.createElement("button");
-    btnClose.textContent = "\u00D7";
-    Object.assign(btnClose.style, {
-      all: "unset",
-      width: "22px",
-      height: "22px",
-      display: "grid",
-      placeItems: "center",
-      borderRadius: "6px",
-      background: "rgba(255,255,255,.15)",
-      cursor: "pointer"
-    });
-    btnClose.title = "Close";
-    btnClose.addEventListener("click", () => wrap.remove());
-    hdr.appendChild(btnClose);
+    const title = document.createElement("div"); title.textContent = "Tic-Tac-Toe"; Object.assign(title.style, { fontSize: "12px", opacity: ".9" });
+    const btnClose = document.createElement("button"); btnClose.textContent = "\u00D7"; Object.assign(btnClose.style, { all: "unset", width: "22px", height: "22px", display: "grid", placeItems: "center", borderRadius: "6px", background: "rgba(255,255,255,.15)", cursor: "pointer" }); btnClose.title = "Close"; btnClose.addEventListener("click", () => { wrap.remove(); });
+    hdr.appendChild(title); hdr.appendChild(btnClose);
 
-    const frame = document.createElement("iframe");
-    const gameUrl = extUrl("features/games/tictactoe/tictactoe.html");
-    if (gameUrl) frame.src = gameUrl; else frame.srcdoc = `<html><body style="margin:0;display:grid;place-items:center;background:#111;color:#fff;font-family:ui-sans-serif,system-ui">Extension reloaded. Reload page to continue.</body></html>`;
-    Object.assign(frame.style, {
-      width: "100%",
-      height: "100%",
-      border: "0",
-      background: "#111"
-    });
+    const inner = document.createElement("div"); Object.assign(inner.style, { position: "absolute", inset: "34px 0 0 0", display: "grid", gridTemplateRows: "auto 1fr auto", gap: "8px" });
+    const toolbar = document.createElement("div"); Object.assign(toolbar.style, { display: "flex", alignItems: "center", gap: "8px", padding: "8px", borderBottom: "1px solid rgba(255,255,255,.12)" });
+    const lab = document.createElement("label"); lab.textContent = "Mode"; Object.assign(lab.style, { fontSize: "12px", opacity: ".8" });
+    const sel = document.createElement("select"); Object.assign(sel.style, { background: "rgba(255,255,255,.08)", color: "#fff", border: "1px solid rgba(255,255,255,.15)", borderRadius: "8px", padding: "6px 8px" }); sel.innerHTML = `<option value="ai_block" selected>vs AI - Smart</option><option value="ai_random">vs AI - Random</option><option value="self">vs Self</option>`;
+    const newBtn = document.createElement("button"); newBtn.textContent = "New"; Object.assign(newBtn.style, { cursor: "pointer", padding: "6px 8px", borderRadius: "8px", background: "#fff", color: "#111", border: 0, fontWeight: 700 });
+    const spacer = document.createElement("div"); Object.assign(spacer.style, { flex: 1 });
+    const scoreEl = document.createElement("div"); scoreEl.textContent = "W 0 | L 0 | D 0"; Object.assign(scoreEl.style, { fontSize: "12px", opacity: ".9" });
+    const resetBtn = document.createElement("button"); resetBtn.textContent = "Reset Stats"; Object.assign(resetBtn.style, { cursor: "pointer", padding: "6px 8px", borderRadius: "8px", background: "rgba(255,255,255,.12)", color: "#fff", border: 0, fontWeight: 700 });
+    toolbar.appendChild(lab); toolbar.appendChild(sel); toolbar.appendChild(newBtn); toolbar.appendChild(spacer); toolbar.appendChild(scoreEl); toolbar.appendChild(resetBtn);
 
-    wrap.appendChild(hdr);
-    wrap.appendChild(frame);
-    document.documentElement.appendChild(wrap);
+    const board = document.createElement("div"); Object.assign(board.style, { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gridTemplateRows: "repeat(3, 1fr)", gap: "10px", padding: "10px" });
+    const status = document.createElement("div"); Object.assign(status.style, { fontSize: "13px", opacity: ".95", padding: "0 10px 10px" });
 
+    inner.appendChild(toolbar); inner.appendChild(board); inner.appendChild(status);
+    wrap.appendChild(hdr); wrap.appendChild(inner); document.documentElement.appendChild(wrap);
     makeDraggable(wrap, hdr);
 
-    frame.addEventListener("load", () => {
-      try { frame.contentWindow.postMessage({ type: "AB_TTT_INIT", payload }, "*"); } catch {}
-    });
+    // Game logic
+    const W_KEY = 'ab_ttt_wins', L_KEY = 'ab_ttt_losses', D_KEY = 'ab_ttt_draws';
+    const WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    let b = Array(9).fill(null); let cur = 'X'; let over = false; let thinking = false; let stats = { w:0,l:0,d:0 };
+    function setStatus(msg){ status.textContent = msg || ''; }
+    function updateScore(){ scoreEl.textContent = `W ${stats.w} | L ${stats.l} | D ${stats.d}`; }
+    function readStats(){ return new Promise((res)=>{ try { chrome.storage?.local.get([W_KEY,L_KEY,D_KEY], (r)=>{ stats.w=Number(r?.[W_KEY]||0); stats.l=Number(r?.[L_KEY]||0); stats.d=Number(r?.[D_KEY]||0); updateScore(); res(); }); } catch { try { const w=localStorage.getItem(W_KEY)||0,l=localStorage.getItem(L_KEY)||0,d=localStorage.getItem(D_KEY)||0; stats={w:Number(w),l:Number(l),d:Number(d)}; updateScore(); } catch {} res(); }}); }
+    function saveStats(){ try { chrome.storage?.local.set({[W_KEY]:stats.w,[L_KEY]:stats.l,[D_KEY]:stats.d}); } catch { try { localStorage.setItem(W_KEY,String(stats.w)); localStorage.setItem(L_KEY,String(stats.l)); localStorage.setItem(D_KEY,String(stats.d)); } catch {} } }
+    function render(){ board.innerHTML=''; for(let i=0;i<9;i++){ const btn=document.createElement('button'); Object.assign(btn.style,{display:'grid',placeItems:'center',fontSize:'38px',lineHeight:'1',width:'100%',aspectRatio:'1/1',background:'rgba(255,255,255,.06)',color:'#fff',border:'1px solid rgba(255,255,255,.15)',borderRadius:'12px',cursor:(b[i]||over||thinking)?'not-allowed':'pointer'}); btn.textContent=b[i]||''; btn.dataset.idx=String(i); btn.disabled=!!b[i]||over||thinking; btn.addEventListener('click', onCell); board.appendChild(btn);} }
+    function winObj(bb){ for(const [a,c,d] of WINS){ if(bb[a]&&bb[a]===bb[c]&&bb[a]===bb[d]) return {p:bb[a],line:[a,c,d]}; } return null; }
+    function empties(bb){ const e=[]; for(let i=0;i<9;i++) if(!bb[i]) e.push(i); return e; }
+    function isDraw(bb){ return empties(bb).length===0 && !winObj(bb); }
+    function pickRandom(bb){ const e=empties(bb); return e.length? e[Math.floor(Math.random()*e.length)] : -1; }
+    function pickSmart(bb, me='O', them='X'){ for(const i of empties(bb)){ const t=bb.slice(); t[i]=me; if(winObj(t)?.p===me) return i; } for(const i of empties(bb)){ const t=bb.slice(); t[i]=them; if(winObj(t)?.p===them) return i; } if(!bb[4]) return 4; const corners=[0,2,6,8].filter(i=>!bb[i]); if(corners.length) return corners[Math.floor(Math.random()*corners.length)]; return pickRandom(bb); }
+    function highlight(line){ const cs=[...board.children]; if(Array.isArray(line)) for(const i of line){ if (cs[i]) { cs[i].style.background='rgba(0,200,120,.25)'; cs[i].style.borderColor='rgba(0,200,120,.65)'; } } }
+
+    function requestTaunt(cb){ const rid = Math.random().toString(36).slice(2); function onMsg(e){ const d=e?.data||{}; if(d.type==='AB_TAUNT_REPLY' && d.id===rid){ try{ window.removeEventListener('message', onMsg); }catch{} cb(String(d.text||'')); } } window.addEventListener('message', onMsg); try { window.top?.postMessage({ type:'AB_TAUNT_REQUEST', id: rid }, '*'); } catch { cb(''); } setTimeout(()=>{ try{ window.removeEventListener('message', onMsg);}catch{} cb(''); }, 1500); }
+
+    function conclude(resu){ over=true; render(); if(resu?.p){ setStatus(`${resu.p} wins!`); highlight(resu.line); if(resu.p==='X') stats.w++; else { stats.l++; requestTaunt((line)=>{ if(!line) line=['Ouch. The O was on point!','GG! The O-bot strikes again.','Next time, center first.','Calculated. Cold. Victorious.','That was a textbook trap.'][Math.floor(Math.random()*5)]; setStatus(`${resu.p} wins!\n${line}`); }); } } else { setStatus('Draw.'); stats.d++; } updateScore(); saveStats(); }
+    function checkEnd(){ const r=winObj(b); if(r){ conclude(r); return true;} if(isDraw(b)){ conclude({}); return true;} return false; }
+    function moveAt(i){ if(over||thinking||b[i]) return false; b[i]=cur; render(); if(checkEnd()) return true; cur = (cur==='X'?'O':'X'); return true; }
+    async function aiTurn(){ if(over||sel.value==='self'||cur!=='O') return; thinking=true; render(); await new Promise(r=>setTimeout(r,200)); let idx = (sel.value==='ai_random')? pickRandom(b) : pickSmart(b,'O','X'); if(idx>=0) moveAt(idx); thinking=false; render(); checkEnd(); }
+    function onCell(e){ const idx=Number(e.currentTarget?.dataset?.idx); if(!Number.isInteger(idx)) return; const ok = moveAt(idx); if(ok) aiTurn(); }
+    function reset(){ b=Array(9).fill(null); cur='X'; over=false; thinking=false; setStatus(''); render(); }
+
+    newBtn.addEventListener('click', reset); resetBtn.addEventListener('click', ()=>{ stats={w:0,l:0,d:0}; saveStats(); updateScore(); }); sel.addEventListener('change', reset);
+    (async ()=>{ await readStats(); reset(); })();
   }
 
   function openFidgitOverlay(payload) {

@@ -92,6 +92,23 @@ window.addEventListener("message", async (e) => {
   await handlePageText(String(data.text || ""));
 });
 
+// Respond to taunt requests from overlays
+window.addEventListener("message", async (e) => {
+  try {
+    if (e.source !== window.top && e.source !== window.parent) return;
+  } catch {}
+  const data = e?.data || {};
+  if (data.type === 'AB_TAUNT_REQUEST') {
+    const rid = data?.id;
+    let text = '';
+    try {
+      const prompt = 'Tic-Tac-Toe loss taunt: 1 witty, short (<= 100 chars), no quotes, SFW.';
+      text = await (window.ABJokes?.jokeForContext(prompt) || Promise.reject(new Error('no ABJokes')));
+    } catch {}
+    try { window.top?.postMessage({ type: 'AB_TAUNT_REPLY', id: rid, text: String(text || '') }, '*'); } catch {}
+  }
+});
+
 async function runJokeFlow() {
   // Visuals: grin + loading speech
   clearTimeout(jokeTimer);
