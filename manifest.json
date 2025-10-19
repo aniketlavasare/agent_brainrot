@@ -14,7 +14,11 @@
   "action": {
     "default_title": "Agent Brainrot",
     "default_popup": "popup.html",
-    "default_icon": "assets/agent_idle.svg"
+    "default_icon": {
+      "16": "assets/agent_idle.svg",
+      "24": "assets/agent_idle.svg",
+      "32": "assets/agent_idle.svg"
+    }
   },
   "background": { "service_worker": "background.js" },
   "content_security_policy": {

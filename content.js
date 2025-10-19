@@ -18,8 +18,12 @@
   }
 
   // Background → content toggle
-  chrome.runtime.onMessage.addListener((msg) => {
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg?.type === "AB_TOGGLE_AGENT") toggleAgent();
+    if (msg?.type === "AB_GET_AGENT_STATE") {
+      const open = !!document.getElementById(AGENT_IFRAME_ID);
+      try { sendResponse({ open }); } catch {}
+    }
   });
 
   // Messages from agent/video iframes
@@ -29,6 +33,13 @@
     if (data.type === "AB_OPEN" && data.module === "video") openVideoOverlay(data.payload || {});
     if (data.type === "AB_OPEN" && data.module === "tictactoe") openTicTacToeOverlay(data.payload || {});
     if (data.type === "AB_OPEN" && data.module === "fidgit") openFidgitOverlay(data.payload || {});
+    // Forward taunt requests from overlays to the agent iframe
+    if (data.type === 'AB_TAUNT_REQUEST') {
+      try {
+        const iframe = document.getElementById(AGENT_IFRAME_ID);
+        iframe?.contentWindow?.postMessage(data, EXT_ORIGIN || '*');
+      } catch {}
+    }
     if (data.type === "AB_CLOSE_TOP" || data.type === "SHORTS_OVERLAY_CLOSE") closeTopOverlay();
     if (data.type === "AB_AGENT_RESIZE") resizeAgent(data.width, data.height);
     if (data.type === "AB_CLOSE_AGENT") closeAgent();
@@ -497,3 +508,4 @@
   // Auto-inject agent on first run of the tab
   injectAgent();
 })();
+

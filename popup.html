@@ -4,36 +4,42 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Agent Brainrot — Preferences</title>
+    <link rel="stylesheet" href="common/ui.css" />
     <style>
       :root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
       body { margin: 0; padding: 14px; width: 320px; color: #111; font-size: 14px; }
       h1 { font-size: 15px; font-weight: 700; margin: 0 0 10px; }
       label { display: block; font-size: 12px; margin-top: 10px; opacity: .8; }
-      input[type="text"], textarea { width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 10px; border: 1px solid #e5e5e5; background: #fafafa; }
-      textarea { min-height: 64px; resize: vertical; }
       .row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
       .hint { font-size: 11px; opacity: .7; }
-      .actions { margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end; }
-      button { cursor: pointer; padding: 8px 10px; border-radius: 10px; border: 0; font-weight: 700; }
-      .primary { background: #111; color: #fff; }
-      .ghost { background: #efefef; color: #111; }
-      #status { margin-top: 8px; font-size: 12px; opacity: .85; min-height: 16px; }
+      .actions { margin-top: 12px; display: flex; gap: 8px; justify-content: space-between; align-items: center; }
+      #status { font-size: 12px; opacity: .85; min-height: 16px; }
+      /* Slider switch */
+      .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+      .switch input { opacity: 0; width: 0; height: 0; }
+      .slider { position: absolute; cursor: pointer; inset: 0; background: #e5e5e5; border-radius: 999px; transition: background .15s ease; }
+      .slider::before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform .15s ease; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+      .switch input:checked + .slider { background: #111; }
+      .switch input:checked + .slider::before { transform: translateX(20px); }
     </style>
   </head>
   <body>
     <h1>Agent Brainrot — Preferences</h1>
-    <div class="row" style="justify-content: space-between">
-      <div class="hint">Manage feed keywords and settings.</div>
-      <button id="toggle" class="ghost" title="Toggle Agent">Open Agent</button>
+    <div class="row" style="justify-content: space-between; align-items: center">
+      <div class="hint">Agent</div>
+      <label class="switch" title="Toggle Agent">
+        <input id="toggleSwitch" type="checkbox" />
+        <span class="slider"></span>
+      </label>
     </div>
 
     <label for="geminiKey">Gemini API Key</label>
-    <input id="geminiKey" type="text" placeholder="Enter your Gemini API key" />
+    <input id="geminiKey" class="ui-input" type="text" placeholder="Enter your Gemini API key" />
     <div class="hint">Required for jokes feature. Get it from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>.</div>
 
     <label for="keywords">Feed Keywords</label>
-    <textarea id="keywords" placeholder="e.g. funny, cats, memes"></textarea>
-    <div class="hint">Comma or newline‑separated. Used to build your Shorts feed.</div>
+    <textarea id="keywords" class="ui-input" placeholder="e.g. funny, cats, memes"></textarea>
+    <div class="hint">Comma- or newline-separated. Used to build your Shorts feed.</div>
 
     <div class="row">
       <input id="shortsOnly" type="checkbox" checked />
@@ -41,11 +47,14 @@
     </div>
 
     <div class="actions">
-      <button id="save" class="primary">Save</button>
-      <button id="clear" class="ghost">Clear</button>
+      <div id="status" aria-live="polite"></div>
+      <div>
+        <button id="clear" class="ui-btn ghost">Clear</button>
+        <button id="save" class="ui-btn primary">Save</button>
+      </div>
     </div>
-    <div id="status" aria-live="polite"></div>
 
     <script src="popup.js"></script>
   </body>
   </html>
+

@@ -5,7 +5,7 @@
   const statusEl = document.getElementById('status');
   const saveBtn = document.getElementById('save');
   const clearBtn = document.getElementById('clear');
-  const toggleBtn = document.getElementById('toggle');
+  const toggleSwitch = document.getElementById('toggleSwitch');
 
   function show(msg, ok=true) {
     statusEl.textContent = msg;
@@ -59,19 +59,44 @@
     }
   });
 
-  // Toggle agent from popup
-  toggleBtn.addEventListener('click', async () => {
+    // Toggle agent from popup with label sync
+  async function getActiveTab() {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.id) return;
-      chrome.tabs.sendMessage(tab.id, { type: 'AB_TOGGLE_AGENT' }).catch(async () => {
-        try {
-          await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
-          chrome.tabs.sendMessage(tab.id, { type: 'AB_TOGGLE_AGENT' }).catch(() => {});
-        } catch {}
-      });
-    } catch {}
+      return tab;
+    } catch { return null; }
+  }
+
+  function setToggleChecked(open) {
+    if (toggleSwitch) toggleSwitch.checked = !!open;
+  }
+
+  async function refreshToggleLabel() {
+    const tab = await getActiveTab();
+    if (!tab?.id) { setToggleChecked(false); return; }
+    try {
+      const state = await chrome.tabs.sendMessage(tab.id, { type: 'AB_GET_AGENT_STATE' });
+      setToggleChecked(!!state?.open);
+    } catch {
+      setToggleChecked(false);
+    }
+  }
+
+  toggleSwitch?.addEventListener('change', async () => {
+    const tab = await getActiveTab();
+    if (!tab?.id) return;
+    try {
+      await chrome.tabs.sendMessage(tab.id, { type: 'AB_TOGGLE_AGENT' });
+      setTimeout(refreshToggleLabel, 150);
+    } catch {
+      try {
+        await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
+        await chrome.tabs.sendMessage(tab.id, { type: 'AB_TOGGLE_AGENT' });
+        setTimeout(refreshToggleLabel, 200);
+      } catch {}
+    }
   });
 
   load();
+  refreshToggleLabel();
 })();
