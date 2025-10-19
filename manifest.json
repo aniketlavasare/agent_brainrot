@@ -33,6 +33,7 @@
         "features/video/video.css",
         "features/video/video.js",
         "features/video/yt.js",
+        "features/jokes/jokes.js",
         "assets/*",
         "common/ui.css"
       ],

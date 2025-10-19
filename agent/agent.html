@@ -13,13 +13,19 @@
 
     <div class="ab-menu">
       <button data-module="video">YouTube Shorts</button>
-      <button disabled>Jokes</button>
+      <button data-module="jokes">Jokes</button>
       <button disabled>Games</button>
       <button disabled>Fidget</button>
     </div>
 
+    <!-- Speech bubble for jokes -->
+    <div class="ab-speech" id="ab_speech" hidden>
+      <div class="ab-speech-inner" id="ab_speech_text"></div>
+    </div>
+
     <button class="ab-close" title="Close Agent" aria-label="Close">&times;</button>
 
+    <script src="../features/jokes/jokes.js"></script>
     <script src="agent.js"></script>
   </body>
 </html>

@@ -1,4 +1,5 @@
 (() => {
+  const geminiKeyEl = document.getElementById('geminiKey');
   const keywordsEl = document.getElementById('keywords');
   const shortsOnlyEl = document.getElementById('shortsOnly');
   const statusEl = document.getElementById('status');
@@ -26,7 +27,8 @@
 
   function load() {
     try {
-      chrome.storage.local.get(['ab_feed_keywords','ab_shorts_only'], (res) => {
+      chrome.storage.local.get(['ab_gemini_api_key','ab_feed_keywords','ab_shorts_only'], (res) => {
+        geminiKeyEl.value = res?.ab_gemini_api_key || '';
         keywordsEl.value = joinKeywords(res?.ab_feed_keywords || []);
         shortsOnlyEl.checked = res?.ab_shorts_only !== false; // default true
       });
@@ -34,10 +36,11 @@
   }
 
   saveBtn.addEventListener('click', () => {
+    const apiKey = (geminiKeyEl.value || '').trim();
     const kw = parseKeywords(keywordsEl.value);
     const so = !!shortsOnlyEl.checked;
     try {
-      chrome.storage.local.set({ ab_feed_keywords: kw, ab_shorts_only: so }, () => {
+      chrome.storage.local.set({ ab_gemini_api_key: apiKey, ab_feed_keywords: kw, ab_shorts_only: so }, () => {
         show('Saved');
       });
     } catch (e) {
@@ -46,10 +49,11 @@
   });
 
   clearBtn.addEventListener('click', () => {
+    geminiKeyEl.value = '';
     keywordsEl.value = '';
     shortsOnlyEl.checked = true;
     try {
-      chrome.storage.local.remove(['ab_feed_keywords','ab_shorts_only'], () => show('Cleared'));
+      chrome.storage.local.remove(['ab_gemini_api_key','ab_feed_keywords','ab_shorts_only'], () => show('Cleared'));
     } catch (e) {
       show('Failed to clear', false);
     }

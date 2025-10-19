@@ -1,6 +1,9 @@
 const bubble = document.querySelector(".ab-bubble");
+const face = document.querySelector(".ab-face");
 const menu = document.querySelector(".ab-menu");
 const closeBtn = document.querySelector(".ab-close");
+const speech = document.getElementById("ab_speech");
+const speechText = document.getElementById("ab_speech_text");
 
 let menuOpen = false;
 function requestResize(width, height) {
@@ -32,6 +35,9 @@ menu.addEventListener("click", (e) => {
       window.top?.postMessage({ type: "AB_OPEN", module: "video", payload: { topic } }, "*");
     });
   }
+  if (module === "jokes") {
+    runJokeFlow();
+  }
   // close the menu after selection
   closeMenu();
 });
@@ -48,3 +54,58 @@ closeBtn?.addEventListener("click", () => {
 });
 
 // (eyes removed)
+
+// ---- Jokes flow ----
+let jokeTimer = null;
+function setFace(src) {
+  if (!face) return;
+  if (src) face.src = src;
+}
+function showSpeech(text) {
+  if (!speech || !speechText) return;
+  speech.hidden = false;
+  speechText.textContent = text;
+}
+function hideSpeech() {
+  if (!speech || !speechText) return;
+  speech.hidden = true;
+  speechText.textContent = "";
+}
+
+function requestPageText() {
+  try { window.top?.postMessage({ type: "AB_GET_PAGE_TEXT" }, "*"); } catch {}
+}
+
+window.addEventListener("message", async (e) => {
+  const data = e.data || {};
+  if (data.type !== "AB_PAGE_TEXT") return;
+  // Allow only messages from our parent/top page
+  try {
+    if (e.source !== window.top && e.source !== window.parent) return;
+  } catch {}
+  await handlePageText(String(data.text || ""));
+});
+
+async function runJokeFlow() {
+  // Visuals: grin + loading speech
+  clearTimeout(jokeTimer);
+  setFace("../assets/agent_grin.svg");
+  showSpeech("Thinking…");
+  requestPageText();
+}
+
+async function handlePageText(pageText) {
+  try {
+    const joke = await (window.ABJokes?.jokeForContext(pageText) || Promise.reject(new Error('ABJokes missing')));
+    showSpeech(joke);
+  } catch (err) {
+    console.error('[Agent] Joke error:', err);
+    showSpeech("Couldn't fetch a joke. Check API key.");
+  } finally {
+    clearTimeout(jokeTimer);
+    jokeTimer = setTimeout(() => {
+      hideSpeech();
+      setFace("../assets/agent_idle.svg");
+    }, 6000);
+  }
+}

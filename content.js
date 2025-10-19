@@ -20,6 +20,7 @@
     if (data.type === "AB_CLOSE_TOP" || data.type === "SHORTS_OVERLAY_CLOSE") closeTopOverlay();
     if (data.type === "AB_AGENT_RESIZE") resizeAgent(data.width, data.height);
     if (data.type === "AB_CLOSE_AGENT") closeAgent();
+    if (data.type === "AB_GET_PAGE_TEXT") sendPageTextToAgent();
   });
 
   function resizeAgent(w, h) {
@@ -138,6 +139,20 @@
     frame.addEventListener("load", () => {
       frame.contentWindow.postMessage({ type: "AB_VIDEO_INIT", payload }, "*");
     });
+  }
+
+  function sendPageTextToAgent() {
+    try {
+      const title = document.title || "";
+      const desc = document.querySelector('meta[name="description"]')?.content || "";
+      let bodyText = "";
+      try { bodyText = (document.body?.innerText || "").replace(/\s+/g, ' ').trim(); } catch {}
+      const combined = [title, desc, bodyText].filter(Boolean).join("\n\n");
+      const maxLen = 3000;
+      const snippet = combined.slice(0, maxLen);
+      const iframe = document.getElementById(AGENT_IFRAME_ID);
+      iframe?.contentWindow?.postMessage({ type: 'AB_PAGE_TEXT', text: snippet }, EXT_ORIGIN);
+    } catch {}
   }
 
   // Simple draggable helper for fixed-position containers
