@@ -21,8 +21,8 @@ function updateFrameSize() {
     // Enough room for bubble above the avatar
     requestResize(260, 200);
   } else {
-    requestResize(80, 80);
-  }
+  requestResize(80, 80);
+}
 }
 
 function openMenu() {
@@ -92,6 +92,8 @@ function hideSpeech() {
   speechText.textContent = "";
   updateFrameSize();
 }
+
+// (Howdy handled from popup toggle to guarantee a user-gesture autoplay)
 
 function requestPageText() {
   try { window.top?.postMessage({ type: "AB_GET_PAGE_TEXT" }, "*"); } catch {}

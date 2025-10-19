@@ -37,6 +37,14 @@
     <input id="geminiKey" class="ui-input" type="text" placeholder="Enter your Gemini API key" />
     <div class="hint">Required for jokes feature. Get it from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>.</div>
 
+    <label for="elevenKey">ElevenLabs API Key</label>
+    <input id="elevenKey" class="ui-input" type="text" placeholder="Enter your ElevenLabs API key" />
+    <div class="hint">Used for agent speech (Howdy!). Get it from <a href="https://api.elevenlabs.io/" target="_blank">ElevenLabs</a>.</div>
+
+    <label for="elevenVoice">ElevenLabs Voice ID</label>
+    <input id="elevenVoice" class="ui-input" type="text" placeholder="Enter a Voice ID" />
+    <div class="hint">Paste your preferred voice ID. Leave empty to disable.</div>
+
     <label for="keywords">Feed Keywords</label>
     <textarea id="keywords" class="ui-input" placeholder="e.g. funny, cats, memes"></textarea>
     <div class="hint">Comma- or newline-separated. Used to build your Shorts feed.</div>
@@ -54,7 +62,7 @@
       </div>
     </div>
 
+    <script src="features/tts/eleven.js"></script>
     <script src="popup.js"></script>
   </body>
   </html>
-
