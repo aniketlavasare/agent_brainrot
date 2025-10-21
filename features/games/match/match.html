@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="dark" />
+    <title>Memory Match</title>
+    <link rel="stylesheet" href="../../../common/ui.css" />
+    <link rel="stylesheet" href="match.css" />
+  </head>
+  <body>
+    <div id="wrap">
+      <header id="hud">
+        <div class="row">
+          <label for="difficulty">Difficulty</label>
+          <select id="difficulty" class="ui-select" aria-label="Difficulty">
+            <option value="easy" selected>Easy (4×2)</option>
+            <option value="medium">Medium (4×3)</option>
+            <option value="hard">Hard (4×4)</option>
+          </select>
+          <button id="new" class="ui-btn primary" title="New Game">New</button>
+        </div>
+        <div class="row small">
+          <div id="moves">Moves: 0</div>
+          <div class="spacer"></div>
+          <div id="matches">Matches: 0/0</div>
+          <div class="spacer"></div>
+          <div id="timer">Time: 0s</div>
+        </div>
+      </header>
+
+      <main id="board" role="grid" aria-label="Memory match board">
+        <!-- Cards will be dynamically created here -->
+      </main>
+
+      <footer id="status" aria-live="polite"></footer>
+    </div>
+
+    <script src="match.js"></script>
+  </body>
+</html>
+

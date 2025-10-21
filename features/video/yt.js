@@ -35,7 +35,15 @@
 
   async function searchYouTube(topic, opts = {}) {
     const key = opts.key || (await getApiKey());
-    if (!key || !topic) return [];
+    if (!key) {
+      console.error("[ABYoutube] No API key available");
+      return [];
+    }
+    if (!topic) {
+      console.error("[ABYoutube] No topic provided");
+      return [];
+    }
+    
     const params = new URLSearchParams({
       part: "snippet",
       q: String(topic),
@@ -48,11 +56,19 @@
     if (opts.safeSearch) params.set('safeSearch', String(opts.safeSearch));
     if (opts.order) params.set('order', String(opts.order));
     if (opts.regionCode) params.set('regionCode', String(opts.regionCode));
+    
+    console.log("[ABYoutube] Searching for:", topic, "with options:", opts);
+    
     try {
       const res = await fetch(`${API_BASE}?${params.toString()}`);
-      if (!res.ok) throw new Error(`YT API ${res.status}`);
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`[ABYoutube] API error ${res.status}:`, errorText);
+        throw new Error(`YT API ${res.status}: ${errorText}`);
+      }
       const data = await res.json();
       const items = Array.isArray(data.items) ? data.items : [];
+      console.log(`[ABYoutube] Found ${items.length} videos`);
       return items.map((item) => ({
         id: item?.id?.videoId,
         title: item?.snippet?.title,
@@ -60,7 +76,7 @@
         thumb: item?.snippet?.thumbnails?.medium?.url || ""
       })).filter(v => v.id && v.url);
     } catch (err) {
-      console.error("Error fetching YouTube videos:", err);
+      console.error("[ABYoutube] Error fetching videos:", err);
       return [];
     }
   }

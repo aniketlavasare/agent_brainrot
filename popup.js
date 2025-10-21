@@ -7,6 +7,7 @@
   const saveBtn = document.getElementById('save');
   const clearBtn = document.getElementById('clear');
   const toggleSwitch = document.getElementById('toggleSwitch');
+  const personalitySwitch = document.getElementById('personalitySwitch');
   const elevenKeyEl = document.getElementById('elevenKey');
   const elevenVoiceEl = document.getElementById('elevenVoice');
 
@@ -30,13 +31,14 @@
 
   function load() {
     try {
-      chrome.storage.local.get(['ab_gemini_api_key','ab_yt_api_key','ab_feed_keywords','ab_shorts_only','ab_eleven_api_key','ab_eleven_voice_id'], (res) => {
+      chrome.storage.local.get(['ab_gemini_api_key','ab_yt_api_key','ab_feed_keywords','ab_shorts_only','ab_eleven_api_key','ab_eleven_voice_id','ab_personality_enabled'], (res) => {
         geminiKeyEl.value = res?.ab_gemini_api_key || '';
         ytKeyEl.value = res?.ab_yt_api_key || '';
         keywordsEl.value = joinKeywords(res?.ab_feed_keywords || []);
         shortsOnlyEl.checked = res?.ab_shorts_only !== false; // default true
         elevenKeyEl.value = res?.ab_eleven_api_key || '';
         elevenVoiceEl.value = res?.ab_eleven_voice_id || '';
+        personalitySwitch.checked = res?.ab_personality_enabled !== false; // default true
       });
     } catch {}
   }
@@ -46,6 +48,7 @@
     const ytKey = (ytKeyEl.value || '').trim();
     const kw = parseKeywords(keywordsEl.value);
     const so = !!shortsOnlyEl.checked;
+    const personalityEnabled = !!personalitySwitch.checked;
     try {
       chrome.storage.local.set({ 
         ab_gemini_api_key: apiKey, 
@@ -53,7 +56,8 @@
         ab_feed_keywords: kw, 
         ab_shorts_only: so, 
         ab_eleven_api_key: (elevenKeyEl.value||'').trim(), 
-        ab_eleven_voice_id: (elevenVoiceEl.value||'').trim() 
+        ab_eleven_voice_id: (elevenVoiceEl.value||'').trim(),
+        ab_personality_enabled: personalityEnabled
       }, () => {
         show('Saved');
       });
@@ -69,8 +73,9 @@
     shortsOnlyEl.checked = true;
     elevenKeyEl.value = '';
     elevenVoiceEl.value = '';
+    personalitySwitch.checked = true;
     try {
-      chrome.storage.local.remove(['ab_gemini_api_key','ab_yt_api_key','ab_feed_keywords','ab_shorts_only','ab_eleven_api_key','ab_eleven_voice_id'], () => show('Cleared'));
+      chrome.storage.local.remove(['ab_gemini_api_key','ab_yt_api_key','ab_feed_keywords','ab_shorts_only','ab_eleven_api_key','ab_eleven_voice_id','ab_personality_enabled'], () => show('Cleared'));
     } catch (e) {
       show('Failed to clear', false);
     }

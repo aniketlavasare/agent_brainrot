@@ -1,6 +1,6 @@
 :root {
-  --radius: 12px;
-  --radius-sm: 10px;
+  --radius: 10px;
+  --radius-sm: 8px;
   --shadow: 0 12px 32px rgba(0,0,0,.35);
   --bg: rgba(18,18,18,.96);
   --bg-soft: rgba(255,255,255,.06);
@@ -8,14 +8,72 @@
   --fg: #fff;
   --muted: rgba(255,255,255,.8);
   --accent: #7cf;
-  --border: 1px solid rgba(255,255,255,.14);
+  --border: 1px solid rgba(255,255,255,.15);
 }
 
 /* minimal resets for extension iframes */
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; background: transparent; color: var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+html, body { 
+  margin: 0; 
+  padding: 0; 
+  background: transparent; 
+  color: var(--fg); 
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; 
+}
 
-.ui-btn { cursor: pointer; border: 0; border-radius: var(--radius-sm); font-weight: 700; line-height: 1; }
-.ui-btn.primary { background: #fff; color: #111; padding: 8px 10px; }
-.ui-btn.ghost { background: var(--bg-soft); color: var(--fg); padding: 6px 8px; }
-.ui-input, .ui-select { background: var(--bg-soft); color: var(--fg); border: var(--border); border-radius: var(--radius-sm); padding: 6px 8px; }
+.ui-btn { 
+  cursor: pointer; 
+  border: 0; 
+  border-radius: var(--radius-sm); 
+  font-weight: 700; 
+  line-height: 1; 
+  transition: all 0.15s ease;
+}
+
+.ui-btn.primary { 
+  background: #fff; 
+  color: #111; 
+  padding: 6px 10px; 
+  font-size: 13px;
+}
+
+.ui-btn.primary:hover {
+  background: #f0f0f0;
+  transform: translateY(-1px);
+}
+
+.ui-btn.ghost { 
+  background: var(--bg-soft); 
+  color: var(--fg); 
+  padding: 4px 8px; 
+  font-size: 12px;
+}
+
+.ui-btn.ghost:hover {
+  background: var(--bg-hover);
+}
+
+.ui-btn.small {
+  font-size: 11px;
+  padding: 4px 6px;
+}
+
+.ui-input, .ui-select { 
+  background: var(--bg-soft); 
+  color: var(--fg); 
+  border: var(--border); 
+  border-radius: var(--radius-sm); 
+  padding: 6px 8px; 
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.ui-input:focus, .ui-select:focus {
+  border-color: rgba(255,255,255,.3);
+}
+
+.ui-select {
+  appearance: none;
+  cursor: pointer;
+}

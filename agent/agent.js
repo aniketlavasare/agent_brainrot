@@ -54,8 +54,8 @@ menu.addEventListener("click", (e) => {
     try { window.ABTTS?.unlock?.(); } catch {}
     runJokeFlow();
   }
-  if (module === "tictactoe") {
-    window.top?.postMessage({ type: "AB_OPEN", module: "tictactoe", payload: {} }, "*");
+  if (module === "games") {
+    window.top?.postMessage({ type: "AB_OPEN", module: "games", payload: {} }, "*");
   }
   if (module === "fidgit") {
     window.top?.postMessage({ type: "AB_OPEN", module: "fidgit", payload: {} }, "*");
@@ -166,7 +166,71 @@ function scheduleNextPersonalityChange() {
   personalityTimer = setTimeout(changePersonalityFace, delayMs);
 }
 
-function changePersonalityFace() {
+// Generate a short remark based on page content
+async function generateRemark(pageContext) {
+  if (!window.ABJokes?.jokeForContext) return null;
+  
+  try {
+    const prompt = [
+      'You are Agent Brainrot, a sassy page assistant.',
+      'Given this page context, reply with ONE super short remark (1-5 words max).',
+      'Be witty, expressive, or observant. Match the page vibe.',
+      'Examples: "Ooh interesting!", "Hmm sketchy...", "Love it!", "Yikes!", "So cool!", "Boring..."',
+      'NO quotes, NO hashtags. Just the raw remark.',
+      '',
+      'Page:',
+      pageContext.slice(0, 1500)
+    ].join('\n');
+    
+    const remark = await window.ABJokes.jokeForContext(prompt, { maxContext: 1500 });
+    return (remark || '').slice(0, 50); // Cap at 50 chars
+  } catch (e) {
+    console.warn('[Agent] Remark generation failed', e);
+    return null;
+  }
+}
+
+// Detect sentiment and pick matching face
+function pickFaceForRemark(remark) {
+  const text = (remark || '').toLowerCase();
+  
+  // Excited/Happy words
+  if (/\b(wow|cool|nice|love|awesome|great|yay|yes|perfect|amazing)\b/i.test(text)) {
+    return 'grin';
+  }
+  // Positive/Pleasant
+  if (/\b(good|interesting|neat|sweet|fun|ooh|hmm|curious)\b/i.test(text)) {
+    return 'smile';
+  }
+  // Negative/Disapproving
+  if (/\b(yikes|ugh|nope|bad|awful|terrible|sketchy|sus)\b/i.test(text)) {
+    return 'pout';
+  }
+  // Sad/Disappointed
+  if (/\b(sad|boring|meh|blah|aw|sigh|tired)\b/i.test(text)) {
+    return 'sad';
+  }
+  
+  // Default to smile for neutral remarks
+  return 'smile';
+}
+
+let personalityRemarkId = 0;
+
+// Check if personality (AI remarks & speech) is enabled
+function isPersonalityEnabled() {
+  return new Promise((resolve) => {
+    try {
+      chrome.storage?.local.get(['ab_personality_enabled'], (res) => {
+        resolve(res?.ab_personality_enabled !== false); // default true
+      });
+    } catch {
+      resolve(true); // default true if error
+    }
+  });
+}
+
+async function changePersonalityFace() {
   // Don't change if face is locked (during jokes, etc.)
   if (Date.now() < faceLockedUntil) {
     scheduleNextPersonalityChange();
@@ -179,8 +243,73 @@ function changePersonalityFace() {
     return;
   }
 
-  // Pick a random face (weighted towards positive emotions)
-  const faceKeys = ["idle", "smile", "smile", "grin", "pout", "sad"]; // smile weighted 2x
+  // Check if personality is enabled
+  const personalityEnabled = await isPersonalityEnabled();
+  
+  // 50% chance to make a remark, 50% just change face silently (only if personality enabled)
+  const shouldRemark = personalityEnabled && Math.random() > 0.5;
+  
+  if (shouldRemark) {
+    // Lock face for remark
+    const myRemarkId = ++personalityRemarkId;
+    faceLockedUntil = Date.now() + 6000;
+    
+    // Get page text and generate remark
+    try {
+      const pageText = await getPageTextForRemark();
+      const remark = await generateRemark(pageText);
+      
+      // Check if we're still the active remark (not interrupted)
+      if (myRemarkId !== personalityRemarkId || Date.now() >= faceLockedUntil) {
+        scheduleNextPersonalityChange();
+        return;
+      }
+      
+      if (remark && remark.trim()) {
+        const face = pickFaceForRemark(remark);
+        const faceData = FACE_ASSETS[face];
+        
+        // Set face and play sound
+        setFace(faceData.src);
+        if (faceData.sound) {
+          playSound(faceData.sound);
+        }
+        
+        // Show and speak the remark
+        showSpeech(remark);
+        try {
+          window.ABTTS?.speak(remark, { volume: 0.7 });
+        } catch {}
+        
+        // Hide speech and revert face after 3-4 seconds
+        setTimeout(() => {
+          if (myRemarkId === personalityRemarkId) {
+            hideSpeech();
+            setFace(FACE_ASSETS.idle.src);
+            faceLockedUntil = 0;
+          }
+        }, 3000 + Math.random() * 1000);
+      } else {
+        // No remark generated, just do silent face change
+        faceLockedUntil = 0;
+        doSilentFaceChange();
+      }
+    } catch (e) {
+      console.warn('[Agent] Personality remark failed', e);
+      faceLockedUntil = 0;
+      doSilentFaceChange();
+    }
+  } else {
+    // Just change face silently without remark
+    doSilentFaceChange();
+  }
+
+  scheduleNextPersonalityChange();
+}
+
+// Silent face change (no remark)
+function doSilentFaceChange() {
+  const faceKeys = ["idle", "smile", "smile", "grin", "pout", "sad"];
   const randomFace = faceKeys[Math.floor(Math.random() * faceKeys.length)];
   const faceData = FACE_ASSETS[randomFace];
 
@@ -190,7 +319,7 @@ function changePersonalityFace() {
       playSound(faceData.sound);
     }
 
-    // Revert to idle after 2-3 seconds (unless it's already idle)
+    // Revert to idle after 2-3 seconds
     if (randomFace !== "idle") {
       setTimeout(() => {
         if (Date.now() >= faceLockedUntil && !menuOpen && speech?.hidden) {
@@ -199,8 +328,31 @@ function changePersonalityFace() {
       }, 2000 + Math.random() * 1000);
     }
   }
+}
 
-  scheduleNextPersonalityChange();
+// Get page text for personality remarks
+function getPageTextForRemark() {
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => resolve(''), 2000); // 2 sec timeout
+    
+    const handler = (e) => {
+      if (e.data?.type === 'AB_PAGE_TEXT_REMARK') {
+        clearTimeout(timeout);
+        window.removeEventListener('message', handler);
+        resolve(e.data.text || '');
+      }
+    };
+    
+    window.addEventListener('message', handler);
+    
+    try {
+      window.top?.postMessage({ type: 'AB_GET_PAGE_TEXT_REMARK' }, '*');
+    } catch {
+      clearTimeout(timeout);
+      window.removeEventListener('message', handler);
+      resolve('');
+    }
+  });
 }
 
 // Start the personality system after a short delay
@@ -296,8 +448,11 @@ async function handlePageText(pageText, id) {
     const joke = await (window.ABJokes?.jokeForContext(pageText) || Promise.reject(new Error('ABJokes missing')));
     setFace("../assets/agent_smile.svg"); // Smile when joke is ready
     showSpeech(joke);
-    // Speak the joke out loud via ElevenLabs TTS (if configured)
-    try { window.ABTTS?.speak(String(joke || ''), { volume: 0.9 }); } catch {}
+    // Speak the joke out loud via ElevenLabs TTS (if configured and personality enabled)
+    const personalityEnabled = await isPersonalityEnabled();
+    if (personalityEnabled) {
+      try { window.ABTTS?.speak(String(joke || ''), { volume: 0.9 }); } catch {}
+    }
   } catch (err) {
     console.error('[Agent] Joke error:', err);
     setFace("../assets/agent_pout.svg"); // Pout on error

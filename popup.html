@@ -33,6 +33,17 @@
       </label>
     </div>
 
+    <div class="row" style="justify-content: space-between; align-items: center; margin-top: 12px;">
+      <div style="flex: 1;">
+        <div style="font-size: 13px; font-weight: 600;">Agent Personality</div>
+        <div class="hint" style="margin-top: 2px;">AI remarks & speech (saves API costs)</div>
+      </div>
+      <label class="switch" title="Enable/Disable Personality">
+        <input id="personalitySwitch" type="checkbox" checked />
+        <span class="slider"></span>
+      </label>
+    </div>
+
     <label for="geminiKey">Gemini API Key</label>
     <input id="geminiKey" class="ui-input" type="text" placeholder="Enter your Gemini API key" />
     <div class="hint">Required for jokes feature. Get it from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>.</div>

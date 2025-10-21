@@ -131,17 +131,42 @@ navDown?.addEventListener('click', () => move(1));
 document.getElementById('playerWrap')?.addEventListener('pointerdown', kickstartAutoplayOnce, { once: true });
 
 async function loadFeedFromPrefs(overrideTopic) {
-  if (!window.ABYoutube) return;
+  if (!window.ABYoutube) {
+    console.error('[Video] ABYoutube not available');
+    return;
+  }
+  
   const { keywords, shortsOnly } = await getPrefs();
-  const topic = (keywords.length ? keywords.join(" ") : "subway surfer brainrot");
+  const topic = (keywords.length ? keywords.join(" ") : "science");
+  console.log('[Video] Loading feed with topic:', topic, 'keywords:', keywords);
+  
   try {
+    // Check if API key is available
+    const apiKey = await window.ABYoutube.getApiKey();
+    if (!apiKey) {
+      console.warn('[Video] No YouTube API key found. Using fallback videos.');
+      feedItems = FALLBACK_IDS.map(id => ({ 
+        id, 
+        url: `https://www.youtube.com/watch?v=${id}`, 
+        thumb: `https://i.ytimg.com/vi/${id}/mqdefault.jpg` 
+      }));
+      buildReel(feedItems);
+      activate(0);
+      return;
+    }
+    
     if (Array.isArray(keywords) && keywords.length > 1) {
       const per = Math.max(2, Math.ceil(FEED_COUNT / keywords.length));
       const calls = keywords.map(k => window.ABYoutube.searchYouTube(`${k} #shorts`, { shortsOnly: shortsOnly !== false, maxResults: per, order: 'relevance', safeSearch: 'moderate' }));
       const lists = await Promise.allSettled(calls);
       const flat = [];
       for (const r of lists) {
-        if (r.status === 'fulfilled' && Array.isArray(r.value)) flat.push(...r.value);
+        if (r.status === 'fulfilled' && Array.isArray(r.value)) {
+          console.log('[Video] Got', r.value.length, 'videos for keyword');
+          flat.push(...r.value);
+        } else if (r.status === 'rejected') {
+          console.error('[Video] Search failed:', r.reason);
+        }
       }
       // Deduplicate by id, keep order
       const seen = new Set();
@@ -158,7 +183,11 @@ async function loadFeedFromPrefs(overrideTopic) {
     } else {
       feedItems = await window.ABYoutube.searchYouTube(`${topic} #shorts`, { shortsOnly: shortsOnly !== false, maxResults: FEED_COUNT, order: 'relevance', safeSearch: 'moderate' });
     }
+    
+    console.log('[Video] Loaded', feedItems.length, 'videos');
+    
     if (!Array.isArray(feedItems) || feedItems.length === 0) {
+      console.warn('[Video] No videos found, using fallback');
       feedItems = FALLBACK_IDS.map(id => ({ 
         id, 
         url: `https://www.youtube.com/watch?v=${id}`, 
@@ -168,7 +197,7 @@ async function loadFeedFromPrefs(overrideTopic) {
     buildReel(feedItems);
     activate(0);
   } catch (e) {
-    console.warn('Feed load failed', e);
+    console.error('[Video] Feed load failed:', e);
     try {
       feedItems = FALLBACK_IDS.map(id => ({ 
         id, 

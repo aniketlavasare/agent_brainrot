@@ -4,21 +4,17 @@
   "version": "1.1.0",
   "description": "An always-on corner agent that spawns brainrot (videos, jokes, games).",
   "icons": {
-    "16": "assets/agent_idle.svg",
-    "32": "assets/agent_idle.svg",
-    "48": "assets/agent_idle.svg",
-    "128": "assets/agent_idle.svg"
+    "16": "assets/agent_idle.png",
+    "32": "assets/agent_idle.png",
+    "48": "assets/agent_idle.png",
+    "128": "assets/agent_idle.png"
   },
   "permissions": ["storage", "scripting", "activeTab"],
   "host_permissions": ["https://*/*", "http://*/*"],
   "action": {
     "default_title": "Agent Brainrot",
     "default_popup": "popup.html",
-    "default_icon": {
-      "16": "assets/agent_idle.svg",
-      "24": "assets/agent_idle.svg",
-      "32": "assets/agent_idle.svg"
-    }
+    "default_icon": "assets/agent_idle.png"
   },
   "background": { "service_worker": "background.js" },
   "content_security_policy": {
@@ -40,9 +36,15 @@
         "features/video/video.css",
         "features/video/video.js",
         "features/video/yt.js",
+        "features/games/games.html",
+        "features/games/games.css",
+        "features/games/games.js",
         "features/games/tictactoe/tictactoe.html",
         "features/games/tictactoe/tictactoe.css",
         "features/games/tictactoe/tictactoe.js",
+        "features/games/match/match.html",
+        "features/games/match/match.css",
+        "features/games/match/match.js",
         "features/fidgit/fidgit.html",
         "features/fidgit/fidgit.css",
         "features/fidgit/fidgit.js",
